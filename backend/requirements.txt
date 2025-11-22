@@ -1,0 +1,22 @@
+# FastAPI and server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+
+# Astronomy libraries
+astropy==6.1.0
+ccdproc==2.4.2
+astroalign==2.5.1
+photutils==1.13.0
+reproject==0.14.0
+
+# Core scientific computing
+numpy==1.26.4
+scipy==1.14.1
+
+# Image processing
+Pillow==10.4.0
+
+# Utilities
+pydantic==2.9.0
+python-dotenv==1.0.1

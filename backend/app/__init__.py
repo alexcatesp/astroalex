@@ -1,0 +1,3 @@
+"""
+Astroalex Backend Application
+"""
