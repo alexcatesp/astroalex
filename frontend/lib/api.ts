@@ -63,6 +63,56 @@ export class ApiClient {
   async getStatus() {
     return this.get<{ status: string; service: string; version: string }>('/');
   }
+
+  // Projects
+  async getProjects() {
+    return this.get<any[]>('/projects');
+  }
+
+  async getProject(id: string) {
+    return this.get<any>(`/projects/${id}`);
+  }
+
+  async createProject(data: { name: string; description?: string }) {
+    return this.post<any>('/projects', data);
+  }
+
+  async updateProject(id: string, data: { name?: string; description?: string }) {
+    return this.put<any>(`/projects/${id}`, data);
+  }
+
+  async deleteProject(id: string, deleteFiles: boolean = false) {
+    return this.delete<void>(`/projects/${id}?delete_files=${deleteFiles}`);
+  }
+
+  async validateProject(id: string) {
+    return this.get<{ project_id: string; valid: boolean; message: string }>(
+      `/projects/${id}/validate`
+    );
+  }
+
+  // Ingestion
+  async scanIngestDirectory(projectId: string) {
+    return this.get<any[]>(`/projects/${projectId}/ingest/scan`);
+  }
+
+  async getIngestStats(projectId: string) {
+    return this.get<any>(`/projects/${projectId}/ingest/stats`);
+  }
+
+  async organizeFiles(
+    projectId: string,
+    sessionName?: string,
+    copy: boolean = false
+  ) {
+    const params = new URLSearchParams();
+    if (sessionName) params.append('session_name', sessionName);
+    params.append('copy', String(copy));
+
+    return this.post<any>(
+      `/projects/${projectId}/ingest/organize?${params.toString()}`
+    );
+  }
 }
 
 // Export singleton instance

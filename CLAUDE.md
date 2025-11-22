@@ -186,12 +186,43 @@ astroalex/
 - ✅ Shared type definitions
 - ✅ Project documentation structure
 
-### Next Steps: Phase 1 - Project Management & Ingestion
-- Implement project CRUD operations (create, list, open)
-- Build directory structure generator
-- Create FITS metadata parser (ASIAIR + generic formats)
-- Implement file organization logic ("mayordomo")
-- Build drag-and-drop UI for ingestion
+### Phase 1: Project Management & Ingestion (✅ COMPLETED)
+
+**Backend Implementation:**
+- ✅ Pydantic models for projects, metadata, and pipelines
+- ✅ DirectoryManager utility for creating standardized project structures
+- ✅ MetadataParser supporting ASIAIR and generic FITS filename formats
+- ✅ ProjectService for CRUD operations with JSON metadata storage
+- ✅ IngestionService ("El Mayordomo") for file organization
+- ✅ REST API endpoints:
+  - `/projects/` - Create, list, get, update, delete projects
+  - `/projects/{id}/ingest/scan` - Scan ingestion directory
+  - `/projects/{id}/ingest/stats` - Get file statistics
+  - `/projects/{id}/ingest/organize` - Organize files into structure
+
+**Frontend Implementation:**
+- ✅ Updated API client with project and ingestion methods
+- ✅ Home page with projects grid and create modal
+- ✅ ProjectCard component for displaying project info
+- ✅ CreateProjectModal for new project creation
+- ✅ Project detail page with ingestion interface
+- ✅ File scanning and statistics display
+- ✅ One-click file organization with session naming
+
+**Key Features:**
+- Automatic directory structure generation (00_ingest, 01_raw_data, 02_processed_data, 03_scripts)
+- Metadata extraction from ASIAIR and other filename formats
+- Intelligent file organization based on image type (Light, Dark, Flat, Bias)
+- Calibration session management for grouping calibration frames
+- Science frame organization by object, date, and filter
+- Real-time file statistics (by type, filter, object, date)
+
+### Next Steps: Phase 2 - Masters de Calibración
+- Visual interface for Bias/Darks/Flats management
+- Frame selection and rejection interface
+- Combination algorithms (Average, Median)
+- Rejection methods (Sigma Clipping, Min/Max)
+- Master frame generation and storage
 
 ## Important Notes for Future Development
 - After each successful implementation, update this file and commit changes
