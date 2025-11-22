@@ -100,11 +100,21 @@ export default function ProjectDetailPage() {
           <Link href="/" className="text-blue-400 hover:text-blue-300 mb-4 inline-block">
             ← Volver a proyectos
           </Link>
-          <h1 className="text-4xl font-bold text-white mb-2">{project.name}</h1>
-          {project.description && (
-            <p className="text-gray-400">{project.description}</p>
-          )}
-          <p className="text-sm text-gray-500 mt-2">📁 {project.path}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">{project.name}</h1>
+              {project.description && (
+                <p className="text-gray-400">{project.description}</p>
+              )}
+              <p className="text-sm text-gray-500 mt-2">📁 {project.path}</p>
+            </div>
+            <Link
+              href={`/projects/${projectId}/calibration`}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+            >
+              Masters de Calibración
+            </Link>
+          </div>
         </div>
 
         {/* Ingestion Section */}

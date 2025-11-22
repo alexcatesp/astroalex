@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 
-from app.routers import projects_router, ingestion_router
+from app.routers import projects_router, ingestion_router, calibration_router
 from app.config import get_settings
 
 # Configure logging
@@ -37,6 +37,7 @@ app.add_middleware(
 # Include routers
 app.include_router(projects_router)
 app.include_router(ingestion_router)
+app.include_router(calibration_router)
 
 @app.get("/")
 async def root():

@@ -113,6 +113,53 @@ export class ApiClient {
       `/projects/${projectId}/ingest/organize?${params.toString()}`
     );
   }
+
+  // Calibration - Sessions
+  async createCalibrationSession(
+    projectId: string,
+    data: { name: string; date: string; telescope?: string; camera?: string }
+  ) {
+    return this.post<any>(`/projects/${projectId}/calibration/sessions`, data);
+  }
+
+  async getCalibrationSessions(projectId: string) {
+    return this.get<any[]>(`/projects/${projectId}/calibration/sessions`);
+  }
+
+  async getCalibrationSession(projectId: string, sessionId: string) {
+    return this.get<any>(`/projects/${projectId}/calibration/sessions/${sessionId}`);
+  }
+
+  // Calibration - Frame scanning
+  async scanCalibrationFrames(
+    projectId: string,
+    sessionName: string,
+    frameType: 'bias' | 'darks' | 'flats'
+  ) {
+    return this.get<any>(
+      `/projects/${projectId}/calibration/sessions/${sessionName}/frames/${frameType}`
+    );
+  }
+
+  // Calibration - Masters
+  async createMaster(projectId: string, data: any) {
+    return this.post<any>(`/projects/${projectId}/calibration/masters`, data);
+  }
+
+  async getMasters(projectId: string, sessionId?: string) {
+    const params = sessionId ? `?session_id=${sessionId}` : '';
+    return this.get<any[]>(`/projects/${projectId}/calibration/masters${params}`);
+  }
+
+  async getMaster(projectId: string, masterId: string) {
+    return this.get<any>(`/projects/${projectId}/calibration/masters/${masterId}`);
+  }
+
+  async deleteMaster(projectId: string, masterId: string, deleteFile: boolean = false) {
+    return this.delete<void>(
+      `/projects/${projectId}/calibration/masters/${masterId}?delete_file=${deleteFile}`
+    );
+  }
 }
 
 // Export singleton instance

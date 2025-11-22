@@ -217,12 +217,48 @@ astroalex/
 - Science frame organization by object, date, and filter
 - Real-time file statistics (by type, filter, object, date)
 
-### Next Steps: Phase 2 - Masters de Calibración
-- Visual interface for Bias/Darks/Flats management
-- Frame selection and rejection interface
-- Combination algorithms (Average, Median)
-- Rejection methods (Sigma Clipping, Min/Max)
-- Master frame generation and storage
+### Phase 2: Masters de Calibración (✅ COMPLETED)
+
+**Backend Implementation:**
+- ✅ CalibrationCombiner using CCDProc for scientifically valid frame combination
+- ✅ Frame validation (dimension checking, data integrity)
+- ✅ Combination methods: Average, Median
+- ✅ Rejection methods: Sigma Clipping, Min/Max, None
+- ✅ MasterCalibrationService for managing master frames
+- ✅ Calibration session management
+- ✅ Frame scanning and information extraction
+- ✅ REST API endpoints:
+  - `/projects/{id}/calibration/sessions` - Create, list sessions
+  - `/projects/{id}/calibration/sessions/{name}/frames/{type}` - Scan frames
+  - `/projects/{id}/calibration/masters` - Create, list, get, delete masters
+
+**Frontend Implementation:**
+- ✅ Calibration page with session management
+- ✅ MasterCreator component with frame selection interface
+- ✅ Session creation modal
+- ✅ Frame type buttons (Bias, Dark, Flat)
+- ✅ Configuration controls for combination and rejection methods
+- ✅ Frame selection with checkbox list
+- ✅ Statistics display for each frame
+- ✅ Master frames list with details
+- ✅ Integration with project detail page
+
+**Key Features:**
+- Create calibration sessions to group frames by date/equipment
+- Scan for calibration frames in session directories
+- Visual frame selection with statistics (mean, median, std)
+- Flexible combination options (median/average)
+- Scientific rejection methods (sigma clipping, minmax)
+- Master frame naming with exposure, gain, and filter
+- Metadata tracking for all created masters
+- Safe file operations with validation
+
+### Next Steps: Phase 3 - Processing Pipeline
+- Calibration block: Apply master frames to science data
+- Quality analysis: FWHM and eccentricity measurement
+- Registration: Image alignment with Astroalign
+- Stacking: Final integration of aligned frames
+- Visual workflow builder interface
 
 ## Important Notes for Future Development
 - After each successful implementation, update this file and commit changes
