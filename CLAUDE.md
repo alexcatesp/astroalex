@@ -253,12 +253,68 @@ astroalex/
 - Metadata tracking for all created masters
 - Safe file operations with validation
 
-### Next Steps: Phase 3 - Processing Pipeline
-- Calibration block: Apply master frames to science data
-- Quality analysis: FWHM and eccentricity measurement
-- Registration: Image alignment with Astroalign
-- Stacking: Final integration of aligned frames
-- Visual workflow builder interface
+### Phase 3: Processing Pipeline (✅ COMPLETED)
+
+**Backend Implementation:**
+- ✅ ScienceFrameCalibrator: Apply master calibration frames to science data
+  - Bias subtraction
+  - Dark subtraction with exposure time scaling
+  - Flat field correction
+  - Batch processing support
+  - Calibration history in FITS headers
+
+- ✅ QualityAnalyzer: Image quality metrics using Photutils
+  - Star detection with DAOStarFinder
+  - FWHM (Full Width Half Maximum) measurement
+  - Roundness and sharpness metrics
+  - Background statistics
+  - Batch analysis and quality filtering
+
+- ✅ ImageRegistrar: Alignment using Astroalign
+  - Star-based image alignment
+  - Automatic reference selection (best FWHM)
+  - Control point matching
+  - Batch registration
+  - Transformation metadata in headers
+
+- ✅ ImageStacker: Frame integration
+  - Stacking methods: Median, Average, Sum
+  - Rejection: Sigma Clipping, Min/Max
+  - Stack by filter (automatic grouping)
+  - Statistics calculation
+
+- ✅ PipelineService: Orchestration and management
+  - Pipeline creation and tracking
+  - Step-by-step execution
+  - Status management
+  - JSON metadata storage
+  - Results aggregation
+
+**API Endpoints** (`/projects/{id}/pipeline`):
+- `POST /` - Create pipeline
+- `GET /` - List pipelines
+- `POST /{id}/calibrate` - Execute calibration
+- `POST /{id}/analyze` - Execute quality analysis
+- `POST /{id}/register` - Execute registration
+- `POST /{id}/stack` - Execute stacking
+- `DELETE /{id}` - Delete pipeline
+
+**Key Features:**
+- Complete science frame processing workflow
+- Scientific validation with CCDProc/Astropy
+- Quality-based frame filtering
+- Automatic reference image selection
+- Multi-filter support with automatic grouping
+- Comprehensive statistics and logging
+- Modular pipeline execution
+- Reproducible processing with metadata tracking
+
+### Next Steps: Phase 4 - Mosaics & Color Combination
+- Mosaic assembly using WCS metadata
+- Background equalization across panels
+- LRGB color combination
+- HaLRGB/SHO narrowband mapping
+- PixelMath for custom channel mixing
 
 ## Important Notes for Future Development
 - After each successful implementation, update this file and commit changes
