@@ -309,12 +309,62 @@ astroalex/
 - Modular pipeline execution
 - Reproducible processing with metadata tracking
 
-### Next Steps: Phase 4 - Mosaics & Color Combination
-- Mosaic assembly using WCS metadata
-- Background equalization across panels
-- LRGB color combination
-- HaLRGB/SHO narrowband mapping
-- PixelMath for custom channel mixing
+### Phase 4 & 5: Visualization & Export (✅ COMPLETED)
+
+**Mosaic Assembly:**
+- ✅ MosaicAssembler using Reproject
+- ✅ WCS-based panel alignment
+- ✅ Optimal celestial WCS calculation
+- ✅ Background matching across panels
+- ✅ Automatic reprojection and co-addition
+
+**Color Combination:**
+- ✅ LRGB combination with luminance weighting
+- ✅ Narrowband mapping (SHO, HOO, Custom)
+- ✅ Channel normalization and stretching
+- ✅ 16-bit TIFF output
+
+**Histogram Stretching:**
+- ✅ Linear, Asinh, Log, Sqrt methods
+- ✅ Shadow/Midtone/Highlight controls
+- ✅ Auto-stretch parameter calculation
+- ✅ Non-destructive stretching
+
+**Image Export:**
+- ✅ Multi-format support: FITS, TIFF, JPG, PNG
+- ✅ 8-bit and 16-bit output
+- ✅ Optional histogram stretching
+- ✅ Metadata preservation
+
+**API Endpoints** (`/visualization`):
+- `POST /mosaic` - Assemble mosaic panels
+- `POST /color/lrgb` - LRGB combination
+- `POST /color/narrowband` - Narrowband mapping
+- `POST /export` - Export to various formats
+
+### Testing Infrastructure (✅ COMPLETED)
+
+**Test Suite:**
+- ✅ Unit tests for utilities (directory, metadata parser)
+- ✅ Integration tests for API endpoints
+- ✅ Test fixtures and helpers
+- ✅ pytest configuration
+- ✅ Async test support
+
+**Test Coverage:**
+- Directory management and validation
+- Metadata parsing (ASIAIR, generic formats)
+- API endpoint availability and responses
+- OpenAPI schema validation
+
+**Running Tests:**
+```bash
+cd backend
+pytest                    # Run all tests
+pytest tests/test_api.py  # Run specific test file
+pytest -v                 # Verbose output
+pytest -k test_parse      # Run tests matching pattern
+```
 
 ## Important Notes for Future Development
 - After each successful implementation, update this file and commit changes
