@@ -4,70 +4,176 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Astroalex** is an intelligent astrophotography processing pipeline application. It's a project manager rather than a toolbox - it automates tedious workflow steps by leveraging a logical directory structure, allowing users to focus on quality decisions.
+**Astroalex V2.0** is an intelligent astrophotography assistant that guides users through the complete workflow - from planning observations before sunset to delivering the final processed image. It's not a toolbox of passive tools; it's an **Active Assistant with Guided Workflow (Wizard)** that tells users what to do next.
 
-**Core Philosophy:** Assume and enforce a structured directory layout to automate 90% of the tedious work. Backend powered by Python with standard astronomy libraries (Astropy, CCDProc, Astroalign) for scientifically valid results.
+**Core Philosophy:** Guide the user through a chronological timeline. The app presents the next logical step instead of making users search through menus. Leverages AI, statistics, and astronomical data to provide certainty and optimization at every stage.
+
+**Differentiation:** Unlike PixInsight ("here are 500 tools, build your solution"), Astroalex says "tell me what you want, I've analyzed the conditions, calculated the exact parameters, and here are the results."
 
 ## Technology Stack
 
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS
 - **Backend:** Python, FastAPI
-- **Core Libraries:** Astropy, CCDProc, Astroalign, Photutils, Reproject, NumPy
+- **Astronomy Libraries:** Astropy, CCDProc, Astroalign, Photutils, Reproject, Astroquery
+- **ML/AI:** scikit-learn (Isolation Forest for quality control, potential U-Net for background extraction)
+- **External APIs:** Meteoblue/OpenMeteo (weather/seeing), APASS/Vizier (photometric calibration)
 - **Communication:** REST API with CORS support
 
-## Architecture Overview
+## Architecture Overview - The Guided Workflow
 
-The application is organized around 5 main modules that follow the astrophotography processing pipeline:
+The application follows a strict chronological workflow divided into two main phases:
 
-### 1. Project Management (Core)
-- Auto-generates standardized directory structure for each project:
-  - `00_ingest/` - Drop zone for raw files
-  - `01_raw_data/` - Organized raw data (calibration/, science/)
-  - `02_processed_data/` - Processed outputs (masters/, science/)
-  - `03_scripts/` - Optional advanced user scripts
-- Project dashboard showing data summary, calibration status, stacking progress, and preview images
+### NIGHT PHASE (Steps 1-5): Planning & Acquisition
 
-### 2. Ingestion Module ("El Mayordomo")
-- Drag-and-drop interface for `00_ingest/` folder
-- Automatic metadata extraction from ASIAIR filenames:
-  - Image type (Light, Dark, Bias, Flat)
-  - Object, Filter, Exposure time, Gain, Date
-- One-click file organization into `01_raw_data/` with auto-created subdirectories
-- Calibration session management (e.g., "2025-10-26_Newton200_ASI533")
+#### Step 1: Environmental Context (Pre-observation)
+**User opens app before observing session**
 
-### 3. Calibration Masters Module
-- Visual interface for each master type (Bias, Darks, Flats)
-- Auto-detection of raw calibration files in `01_raw_data/calibration/SESSION_NAME/`
-- Thumbnail inspection with blink comparison
-- User can reject frames with artifacts
-- Combination methods: Average, Median
-- Rejection methods: Sigma Clipping, Min/Max
-- Outputs to `02_processed_data/masters/SESSION_NAME/` with standardized naming (e.g., `master_dark_300s_gain100.fits`)
+- **Automatic Inputs:**
+  - Geolocation (automatic)
+  - Current date/time
+- **Backend Processes:**
+  - Query weather API (Meteoblue/OpenMeteo) for Seeing, Jet Stream, clouds
+  - Calculate ephemerides (astronomical darkness window, moon phase)
+- **Assistant Output Example:**
+  > "Good evening, Alex. Tonight you have 5h 30m of astronomical darkness (23:00 - 04:30).
+  > Seeing is mediocre (2.5"), I recommend avoiding extreme focal lengths or using 2x2 binning.
+  > Moon is at 80%, suggesting narrowband work (H-alpha)."
 
-### 4. Processing Pipeline (Core Module)
-Modular visual workflow builder with processing blocks:
-1. **Calibration Block** - Apply master calibration frames (auto-suggested based on metadata)
-2. **Quality Analysis Block** (Optional) - Measure FWHM and eccentricity, reject poor frames
-3. **Registration Block** - Align images using Astroalign
-4. **Stacking Block** - Integrate aligned frames with chosen combination/rejection methods
+**Implementation:**
+- Service: `EnvironmentalService` (weather API + ephemerides calculation)
+- Models: `ObservingSession`, `SkyConditions`, `Ephemeris`
+- Endpoints: `/session/context`, `/session/conditions`
 
-Outputs:
-- Intermediate results: `02_processed_data/science/OBJECT_NAME/` (calibrated/, registered/)
-- Final stacks: `02_processed_data/science/OBJECT_NAME/stacked/`
+#### Step 2: "The Laboratory" (Camera Characterization)
+**Astroalex needs to know the camera's physics for the current night**
 
-### 5. Mosaic Assembly & Color Combination
-- **Mosaic Assembly:**
-  - Auto-detects panel alignment from WCS metadata
-  - Background equalization and projection method options
-- **Color Combination:**
-  - LRGB: 4-slot interface (L, R, G, B) with color balance and luminance saturation controls
-  - HaLRGB/SHO: Flexible channel mapping with simplified PixelMath (e.g., `R = 0.8*Ha + 0.2*R`)
+- **User Action:** Take 2 Bias + 2 Flats and upload
+- **Backend Processes:**
+  - Calculate actual Read Noise (e-)
+  - Calculate Gain (e-/ADU)
+  - Calculate Full Well Capacity
+  - Save "Night Sensor Profile"
+- **Assistant Output Example:**
+  > "Profile updated. Your camera is performing at 1.5e- read noise. System calibrated."
 
-### 6. Visualization & Export
-- Integrated high-dynamic-range FITS viewer
-- Non-destructive histogram stretching (Asinh, Log, Linear) saved as "recipes"
-- Background extraction tool (ABE/DBE methods)
-- Export formats: FITS, TIFF (16-bit), JPG
+**Implementation:**
+- Service: `CameraCharacterizer`
+- Methods: `calculate_read_noise()`, `calculate_gain()`, `calculate_fwc()`
+- Models: `SensorProfile`, `CameraCharacteristics`
+- Database: Pre-populated camera specs (ZWO, QHY, ToupTek)
+
+#### Step 3: Target Selection (The Strategist)
+**Intelligent target recommendation based on conditions**
+
+**Option A: Intelligent Suggestion**
+- Cross-reference: FOV + Time Window + Location + Moon Phase
+- Filter object database (NGC/IC/Messier)
+- Discard: Objects too low, too small for pixel scale, too large for sensor
+- **Output:** "Best Targets for Tonight" with encuadre simulation
+
+**Option B: Manual Selection**
+- User enters "Horsehead"
+- Visual framing simulator validates feasibility
+
+**Implementation:**
+- Service: `TargetSelector`
+- Database: `objects_catalog.db` (NGC/IC/Messier with coordinates, size, surface brightness)
+- Methods: `suggest_targets()`, `validate_target()`, `simulate_fov()`
+- Models: `CelestialTarget`, `FOVSimulation`
+
+#### Step 4: "Smart Scout" (Real Field Analysis)
+**Empirical validation using a test frame**
+
+- **User Action:** Point at object, take one 30s test shot, upload
+- **AI/Math Analysis:**
+  - Light pollution measurement (electrons/second)
+  - Dynamic range analysis (detect stellar saturation)
+  - If >3% pixels saturated → Flag "HDR Required"
+  - Calculate optimal exposure using: $SkyNoise > 10 \times ReadNoise^2$
+- **Assistant Output Example:**
+  > "Sky background: 45 e-/s. Detected saturation in Alnitak.
+  > Optimal exposure: 180s for H-alpha, 120s for RGB.
+  > HDR strategy required for star cores."
+
+**Implementation:**
+- Service: `SmartScout`
+- Methods: `analyze_sky_background()`, `detect_saturation()`, `calculate_optimal_exposure()`
+- Models: `ScoutAnalysis`, `ExposureRecommendation`
+
+#### Step 5: Flight Plan Generator (The Mission)
+**Generates precise acquisition instructions**
+
+- **Logic:** Combines available time + optimal exposure + object structure
+- **Output Example:**
+  > **Optimized Plan for Horsehead Nebula:**
+  > - **Lights:** 120 × 180s (H-alpha), 30 × 120s (R, G, B)
+  > - **Calibration:** Darks: 20 × 180s + 20 × 120s, Flats: 20 per filter, Bias: 50
+- **Export:**
+  - ASIAIR format (.plan)
+  - N.I.N.A. format (.json)
+- **Automation:** Creates project directory structure automatically
+
+**Implementation:**
+- Service: `FlightPlanGenerator`
+- Methods: `generate_plan()`, `export_asiair()`, `export_nina()`
+- Models: `AcquisitionPlan`, `PlanExport`
+
+---
+
+### DAY PHASE (Steps 6-8): Processing & Delivery
+
+#### Step 6: "El Mayordomo" (Ingestion & Organization)
+**User dumps SD card into `00_ingest/`**
+
+- Click "Organize & Process"
+- Automatic: Read FITS metadata, move to proper directories
+- Separate HDR exposures (short vs long) if required
+
+**Implementation:** (Already implemented - Phase 1)
+- Service: `IngestionService`
+- Maintains existing functionality
+
+#### Step 7: "Quality Control" (AI Filter)
+**ML-based anomaly detection**
+
+- **Technology:** Unsupervised ML (Isolation Forest)
+- **Process:**
+  - Analyze each image: FWHM, Eccentricity, Background, Star Count
+  - Detect anomalies (clouds, wind, guiding failures)
+  - Move rejected images to `_Rejected/`
+- **Feedback:** Graph showing "12 images rejected (8 clouds, 4 guiding)"
+
+**Implementation:**
+- Service: `QualityControl`
+- Methods: `extract_features()`, `train_isolation_forest()`, `detect_anomalies()`
+- Models: `FrameQualityMetrics`, `RejectionReport`
+- Library: `sklearn.ensemble.IsolationForest`
+
+#### Step 8: Processing Pipeline (Autorun)
+**The central engine**
+
+Enhanced from existing implementation with:
+1. **Master Generation** (existing)
+2. **Calibration** (existing)
+3. **Registration** (existing)
+4. **Integration/Stacking** (existing) + **HDR Fusion** (new)
+5. **Linear Prep & AI:**
+   - Auto-Crop (dithering borders)
+   - AI Background Extraction (U-Net neural network)
+   - Linear Fit (equalize RGB brightness)
+6. **Color & Luminance:**
+   - LRGB or HaLRGB intelligent combination
+   - PCC (Photometric Color Calibration via APASS/Vizier)
+   - Blind deconvolution (sharpness restoration)
+7. **Transform & Finish:**
+   - Auto-Stretch (histogram-based)
+   - Final noise reduction
+   - Export JPG (social media) + TIFF 16-bit (fine editing)
+
+**Implementation:**
+- Extend existing `PipelineService`
+- New services: `HDRFusion`, `AIBackgroundExtractor`, `PhotometricColorCalibrator`, `AutoStretcher`
+- Models: Enhanced `ProcessingPipeline` with new steps
 
 ## Directory Structure Convention
 
@@ -84,50 +190,118 @@ PROJECT_NAME/
 │   └── science/
 │       └── OBJECT_NAME/
 │           └── DATE/
-│               └── Filter_X/
+│               ├── Filter_X/
+│               └── HDR/          # If HDR required (short + long exposures)
 ├── 02_processed_data/
 │   ├── masters/
 │   │   └── SESSION_NAME/
-│   └── science/
-│       └── OBJECT_NAME/
-│           ├── calibrated/
-│           ├── registered/
-│           └── stacked/
-└── 03_scripts/                   # Optional user scripts
+│   ├── science/
+│   │   └── OBJECT_NAME/
+│   │       ├── calibrated/
+│   │       ├── registered/
+│   │       ├── stacked/
+│   │       └── final/           # Auto-stretched outputs
+│   └── _Rejected/               # Failed quality control
+├── 03_scripts/                  # Optional user scripts
+└── session_plan.json            # Flight plan metadata
 ```
 
-## File Naming Conventions
+## Data Models
 
-The application expects ASIAIR-style filenames that encode metadata:
-- Pattern: `{OBJECT}_{TYPE}_{FILTER}_{EXPOSURE}s_gain{GAIN}_{DATE}_{SEQUENCE}.fit`
-- Example: `M31_Andromeda_Galaxy_Light_Filter_L_300s_gain100_2025-10-26_001.fit`
+### New Models for V2.0
 
-Master calibration files use standardized naming:
-- Pattern: `master_{TYPE}_{EXPOSURE}s_gain{GAIN}.fits`
-- Example: `master_dark_300s_gain100.fits`
+```python
+# Environmental Context
+class SkyConditions(BaseModel):
+    seeing: float  # arcseconds
+    clouds: int    # percentage
+    jet_stream: float  # m/s
+    transparency: Optional[int]
+
+class Ephemeris(BaseModel):
+    darkness_start: datetime
+    darkness_end: datetime
+    darkness_duration: timedelta
+    moon_phase: float  # 0-1
+    moon_illumination: int  # percentage
+
+class ObservingSession(BaseModel):
+    id: str
+    date: datetime
+    location: GeoLocation
+    conditions: SkyConditions
+    ephemeris: Ephemeris
+    camera_profile: Optional[SensorProfile]
+    target: Optional[CelestialTarget]
+    plan: Optional[AcquisitionPlan]
+
+# Camera Characterization
+class SensorProfile(BaseModel):
+    camera_model: str
+    read_noise: float  # electrons
+    gain: float  # e-/ADU
+    full_well_capacity: int  # electrons
+    measured_date: datetime
+    temperature: Optional[float]
+
+# Target Selection
+class CelestialTarget(BaseModel):
+    name: str
+    catalog_id: str  # NGC, IC, M, etc.
+    ra: float  # degrees
+    dec: float  # degrees
+    size: float  # arcminutes
+    surface_brightness: float  # mag/arcsec²
+    optimal_filters: List[str]
+
+# Smart Scout
+class ScoutAnalysis(BaseModel):
+    sky_background: float  # e-/s
+    saturation_detected: bool
+    saturation_percentage: float
+    hdr_required: bool
+    optimal_exposure: Dict[str, int]  # {filter: seconds}
+    snr_estimate: float
+
+# Flight Plan
+class AcquisitionPlan(BaseModel):
+    target: CelestialTarget
+    lights: Dict[str, PlanItem]  # {filter: PlanItem}
+    darks: List[PlanItem]
+    flats: List[PlanItem]
+    bias: PlanItem
+    total_time: timedelta
+    export_formats: List[str]
+```
 
 ## Development Guidelines
+
+### Wizard UX Principles
+- **Linear Flow:** User cannot skip steps (Step N requires Step N-1 completion)
+- **Smart Defaults:** Pre-fill all calculable parameters
+- **Clear Feedback:** Assistant speaks in natural language with concrete numbers
+- **Progressive Disclosure:** Show only current step + next step preview
+- **Escape Hatches:** Allow advanced users to override recommendations
 
 ### FITS File Handling
 - Always preserve WCS (World Coordinate System) metadata through the pipeline
 - Use Astropy for FITS I/O to ensure header integrity
-- Calibration operations should use CCDProc for scientifically valid results
+- Store processing history in FITS headers (HISTORY keyword)
 
-### Pipeline Design
-- Each processing step must be reproducible and logged
-- Intermediate results should be saved to allow pipeline restart from any point
-- Processing blocks should be modular and reusable across different workflows
+### API Integration
+- **Weather APIs:** Implement with fallback (Meteoblue → OpenMeteo)
+- **Catalog Queries:** Cache APASS/Vizier results (avoid repeated queries)
+- **Rate Limiting:** Respect API limits with exponential backoff
 
-### Metadata Management
-- Extract and validate metadata early (during ingestion)
-- Store processing history in FITS headers
-- Track calibration frame associations (which masters were applied to which science frames)
+### ML/AI Considerations
+- **Isolation Forest:** Train per-session (not global model)
+- **Feature Engineering:** Normalize FWHM by session median
+- **Contamination Parameter:** Default 0.1 (10% expected anomalies)
 
-### UI Considerations
-- The interface should guide users through the logical workflow sequence
-- Auto-suggest appropriate calibration frames based on matching exposure time, gain, and temporal proximity
-- Provide visual feedback on processing progress for long operations
-- Allow batch processing while showing per-frame status
+### Testing Strategy
+- **Unit Tests:** Each calculation (read noise, exposure, ephemerides)
+- **Integration Tests:** Full wizard flow with mock data
+- **E2E Tests:** Real FITS files through complete pipeline
 
 ## Development Commands
 
@@ -146,8 +320,7 @@ cd backend
 python -m venv venv  # Create virtual environment
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt  # Install dependencies
-cd app
-python main.py       # Start development server (http://localhost:8000)
+python -m app.main   # Start from backend/ directory (not backend/app/)
 ```
 
 ### API Documentation
@@ -159,215 +332,88 @@ python main.py       # Start development server (http://localhost:8000)
 ```
 astroalex/
 ├── frontend/          # Next.js 15 + TypeScript frontend
-│   ├── app/          # App Router pages and layouts
-│   ├── components/   # React components
-│   ├── lib/          # Utilities and API client
-│   └── public/       # Static assets
-├── backend/          # FastAPI Python backend
 │   ├── app/
-│   │   ├── main.py   # API entry point
-│   │   ├── routers/  # API endpoint handlers
-│   │   ├── services/ # Business logic layer
-│   │   ├── models/   # Pydantic data models
-│   │   └── utils/    # Utility functions
-│   └── tests/        # Backend tests
-├── shared/           # Shared TypeScript types/schemas
-│   └── types.ts      # Type definitions
-└── docs/             # Documentation
-    └── DEVELOPMENT.md # Development guide
+│   │   ├── page.tsx           # Home (session list/create)
+│   │   ├── session/
+│   │   │   └── [id]/
+│   │   │       ├── step1/     # Environmental context
+│   │   │       ├── step2/     # Camera characterization
+│   │   │       ├── step3/     # Target selection
+│   │   │       ├── step4/     # Smart scout
+│   │   │       ├── step5/     # Flight plan
+│   │   │       ├── step6/     # Ingestion
+│   │   │       ├── step7/     # Quality control
+│   │   │       └── step8/     # Processing
+│   ├── components/
+│   │   ├── wizard/            # Wizard navigation components
+│   │   ├── session/           # Session-specific components
+│   │   └── shared/            # Reusable components
+│   └── lib/
+│       ├── api.ts             # API client
+│       └── calculations.ts    # Client-side astronomy math
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routers/
+│   │   │   ├── session.py          # Session management
+│   │   │   ├── environmental.py    # Weather + ephemerides
+│   │   │   ├── characterization.py # Camera analysis
+│   │   │   ├── targets.py          # Target selection
+│   │   │   ├── scout.py            # Smart scout
+│   │   │   ├── planner.py          # Flight plan generation
+│   │   │   └── ...existing...
+│   │   ├── services/
+│   │   │   ├── environmental_service.py
+│   │   │   ├── camera_characterizer.py
+│   │   │   ├── target_selector.py
+│   │   │   ├── smart_scout.py
+│   │   │   ├── flight_planner.py
+│   │   │   ├── quality_control.py
+│   │   │   └── ...existing...
+│   │   ├── models/
+│   │   │   ├── session.py
+│   │   │   ├── environmental.py
+│   │   │   ├── camera.py
+│   │   │   └── ...existing...
+│   │   ├── data/
+│   │   │   ├── objects_catalog.db  # NGC/IC/Messier database
+│   │   │   └── cameras.json        # Pre-populated camera specs
+│   │   └── ml/
+│   │       └── quality_control.py  # Isolation Forest model
+│   └── tests/
+└── docs/
 ```
 
 ## Current Implementation Status
 
-### Phase 0: Configuration (✅ COMPLETED)
-- ✅ Next.js 15 frontend with TypeScript and Tailwind CSS
-- ✅ FastAPI backend with Python
-- ✅ API client configuration for frontend-backend communication
-- ✅ Shared type definitions
-- ✅ Project documentation structure
+### ✅ COMPLETED (V1.0 Foundation)
+- Phase 0: Project configuration
+- Phase 1: Project management & ingestion
+- Phase 2: Master calibration
+- Phase 3: Processing pipeline (basic)
+- Phase 4-5: Visualization & export (basic)
+- Testing infrastructure
 
-### Phase 1: Project Management & Ingestion (✅ COMPLETED)
+### 🚧 IN PROGRESS (V2.0 Wizard)
+- **Priority 1:** Wizard UI framework and navigation
+- **Priority 2:** Environmental context (Step 1)
+- **Priority 3:** Camera characterization (Step 2)
+- **Priority 4:** Target selection (Step 3)
+- **Priority 5:** Smart Scout (Step 4)
+- **Priority 6:** Flight Plan Generator (Step 5)
+- **Priority 7:** ML Quality Control (Step 7)
+- **Priority 8:** Enhanced Pipeline (Step 8)
 
-**Backend Implementation:**
-- ✅ Pydantic models for projects, metadata, and pipelines
-- ✅ DirectoryManager utility for creating standardized project structures
-- ✅ MetadataParser supporting ASIAIR and generic FITS filename formats
-- ✅ ProjectService for CRUD operations with JSON metadata storage
-- ✅ IngestionService ("El Mayordomo") for file organization
-- ✅ REST API endpoints:
-  - `/projects/` - Create, list, get, update, delete projects
-  - `/projects/{id}/ingest/scan` - Scan ingestion directory
-  - `/projects/{id}/ingest/stats` - Get file statistics
-  - `/projects/{id}/ingest/organize` - Organize files into structure
+## Migration Strategy from V1 to V2
 
-**Frontend Implementation:**
-- ✅ Updated API client with project and ingestion methods
-- ✅ Home page with projects grid and create modal
-- ✅ ProjectCard component for displaying project info
-- ✅ CreateProjectModal for new project creation
-- ✅ Project detail page with ingestion interface
-- ✅ File scanning and statistics display
-- ✅ One-click file organization with session naming
-
-**Key Features:**
-- Automatic directory structure generation (00_ingest, 01_raw_data, 02_processed_data, 03_scripts)
-- Metadata extraction from ASIAIR and other filename formats
-- Intelligent file organization based on image type (Light, Dark, Flat, Bias)
-- Calibration session management for grouping calibration frames
-- Science frame organization by object, date, and filter
-- Real-time file statistics (by type, filter, object, date)
-
-### Phase 2: Masters de Calibración (✅ COMPLETED)
-
-**Backend Implementation:**
-- ✅ CalibrationCombiner using CCDProc for scientifically valid frame combination
-- ✅ Frame validation (dimension checking, data integrity)
-- ✅ Combination methods: Average, Median
-- ✅ Rejection methods: Sigma Clipping, Min/Max, None
-- ✅ MasterCalibrationService for managing master frames
-- ✅ Calibration session management
-- ✅ Frame scanning and information extraction
-- ✅ REST API endpoints:
-  - `/projects/{id}/calibration/sessions` - Create, list sessions
-  - `/projects/{id}/calibration/sessions/{name}/frames/{type}` - Scan frames
-  - `/projects/{id}/calibration/masters` - Create, list, get, delete masters
-
-**Frontend Implementation:**
-- ✅ Calibration page with session management
-- ✅ MasterCreator component with frame selection interface
-- ✅ Session creation modal
-- ✅ Frame type buttons (Bias, Dark, Flat)
-- ✅ Configuration controls for combination and rejection methods
-- ✅ Frame selection with checkbox list
-- ✅ Statistics display for each frame
-- ✅ Master frames list with details
-- ✅ Integration with project detail page
-
-**Key Features:**
-- Create calibration sessions to group frames by date/equipment
-- Scan for calibration frames in session directories
-- Visual frame selection with statistics (mean, median, std)
-- Flexible combination options (median/average)
-- Scientific rejection methods (sigma clipping, minmax)
-- Master frame naming with exposure, gain, and filter
-- Metadata tracking for all created masters
-- Safe file operations with validation
-
-### Phase 3: Processing Pipeline (✅ COMPLETED)
-
-**Backend Implementation:**
-- ✅ ScienceFrameCalibrator: Apply master calibration frames to science data
-  - Bias subtraction
-  - Dark subtraction with exposure time scaling
-  - Flat field correction
-  - Batch processing support
-  - Calibration history in FITS headers
-
-- ✅ QualityAnalyzer: Image quality metrics using Photutils
-  - Star detection with DAOStarFinder
-  - FWHM (Full Width Half Maximum) measurement
-  - Roundness and sharpness metrics
-  - Background statistics
-  - Batch analysis and quality filtering
-
-- ✅ ImageRegistrar: Alignment using Astroalign
-  - Star-based image alignment
-  - Automatic reference selection (best FWHM)
-  - Control point matching
-  - Batch registration
-  - Transformation metadata in headers
-
-- ✅ ImageStacker: Frame integration
-  - Stacking methods: Median, Average, Sum
-  - Rejection: Sigma Clipping, Min/Max
-  - Stack by filter (automatic grouping)
-  - Statistics calculation
-
-- ✅ PipelineService: Orchestration and management
-  - Pipeline creation and tracking
-  - Step-by-step execution
-  - Status management
-  - JSON metadata storage
-  - Results aggregation
-
-**API Endpoints** (`/projects/{id}/pipeline`):
-- `POST /` - Create pipeline
-- `GET /` - List pipelines
-- `POST /{id}/calibrate` - Execute calibration
-- `POST /{id}/analyze` - Execute quality analysis
-- `POST /{id}/register` - Execute registration
-- `POST /{id}/stack` - Execute stacking
-- `DELETE /{id}` - Delete pipeline
-
-**Key Features:**
-- Complete science frame processing workflow
-- Scientific validation with CCDProc/Astropy
-- Quality-based frame filtering
-- Automatic reference image selection
-- Multi-filter support with automatic grouping
-- Comprehensive statistics and logging
-- Modular pipeline execution
-- Reproducible processing with metadata tracking
-
-### Phase 4 & 5: Visualization & Export (✅ COMPLETED)
-
-**Mosaic Assembly:**
-- ✅ MosaicAssembler using Reproject
-- ✅ WCS-based panel alignment
-- ✅ Optimal celestial WCS calculation
-- ✅ Background matching across panels
-- ✅ Automatic reprojection and co-addition
-
-**Color Combination:**
-- ✅ LRGB combination with luminance weighting
-- ✅ Narrowband mapping (SHO, HOO, Custom)
-- ✅ Channel normalization and stretching
-- ✅ 16-bit TIFF output
-
-**Histogram Stretching:**
-- ✅ Linear, Asinh, Log, Sqrt methods
-- ✅ Shadow/Midtone/Highlight controls
-- ✅ Auto-stretch parameter calculation
-- ✅ Non-destructive stretching
-
-**Image Export:**
-- ✅ Multi-format support: FITS, TIFF, JPG, PNG
-- ✅ 8-bit and 16-bit output
-- ✅ Optional histogram stretching
-- ✅ Metadata preservation
-
-**API Endpoints** (`/visualization`):
-- `POST /mosaic` - Assemble mosaic panels
-- `POST /color/lrgb` - LRGB combination
-- `POST /color/narrowband` - Narrowband mapping
-- `POST /export` - Export to various formats
-
-### Testing Infrastructure (✅ COMPLETED)
-
-**Test Suite:**
-- ✅ Unit tests for utilities (directory, metadata parser)
-- ✅ Integration tests for API endpoints
-- ✅ Test fixtures and helpers
-- ✅ pytest configuration
-- ✅ Async test support
-
-**Test Coverage:**
-- Directory management and validation
-- Metadata parsing (ASIAIR, generic formats)
-- API endpoint availability and responses
-- OpenAPI schema validation
-
-**Running Tests:**
-```bash
-cd backend
-pytest                    # Run all tests
-pytest tests/test_api.py  # Run specific test file
-pytest -v                 # Verbose output
-pytest -k test_parse      # Run tests matching pattern
-```
+1. **Preserve existing functionality:** V1 routes remain available under `/v1/` prefix
+2. **Session-based approach:** All V2 operations tied to `ObservingSession` entity
+3. **Progressive enhancement:** Wizard can use existing calibration/processing services
+4. **Data compatibility:** V1 projects can be imported into V2 sessions
 
 ## Important Notes for Future Development
-- After each successful implementation, update this file and commit changes
-- Keep shared types in sync between TypeScript and Pydantic models
-- Use conventional commits (feat:, fix:, docs:, etc.)
-- Test frontend-backend integration after API changes
+- Each wizard step must save state (allow resume if user closes app)
+- Assistant messages stored in session history for reproducibility
+- All recommendations must show underlying calculation/data source
+- Export all session data as JSON for external analysis
+- Keep V1 API stable for backwards compatibility

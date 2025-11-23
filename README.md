@@ -1,38 +1,141 @@
-# Astroalex
+# Astroalex V2.0
 
-**Tu pipeline de procesamiento astrofotográfico, automatizado e inteligente.**
+**Tu Asistente Inteligente de Astrofotografía - De la Planificación a la Imagen Final**
 
-Astroalex es una aplicación de gestión de proyectos de astrofotografía que automatiza el flujo de trabajo desde la ingesta de datos hasta la imagen final procesada, con un enfoque en la reproducibilidad y la eficiencia.
+Astroalex no es una caja de herramientas, es un **Asistente Activo** que te guía paso a paso desde antes de que se ponga el sol hasta la imagen procesada final. No busques herramientas en menús - la aplicación te dice qué hacer a continuación.
 
-## Características
+## Filosofía
 
-### Módulos Implementados
+> **PixInsight:** "Aquí tienes 500 martillos, construye tu casa."
+> **Astroalex:** "Dime qué casa quieres, he analizado el terreno, he pedido los materiales exactos y aquí tienes las llaves."
 
-- ✅ **Gestión de Proyectos**: Crea y organiza proyectos con estructura de directorios estandarizada
-- ✅ **Ingesta Inteligente**: Organización automática de archivos basada en metadatos
-- 🚧 **Masters de Calibración**: Creación de master darks, flats y bias con interfaz visual
-- 🚧 **Pipeline de Procesamiento**: Calibración, registro y apilado con workflow modular
-- 🚧 **Mosaicos y Color**: Ensamblaje de mosaicos y combinación LRGB/SHO
-- 🚧 **Visualización**: Visor FITS con herramientas de stretch y exportación
+Astroalex combina **IA, estadística y datos astronómicos** para darte certeza en cada paso del proceso.
 
-### Stack Tecnológico
+## El Flujo Guiado (Wizard)
 
-- **Frontend**: Next.js 15, TypeScript, Tailwind CSS
-- **Backend**: Python, FastAPI
-- **Procesamiento**: Astropy, CCDProc, Astroalign, Photutils, Reproject
+### Fase NOCHE (Pasos 1-5): Planificación & Adquisición
+
+#### 1️⃣ Contexto y Medio Ambiente
+Abres la app antes de la sesión y Astroalex te dice:
+> "Buenas noches, Alex. Hoy tienes 5h 30m de oscuridad (23:00 - 04:30).
+> Seeing mediocre (2.5"), mejor usar Binning 2x2 o evitar focales extremas.
+> Luna al 80%, te recomiendo Banda Estrecha (H-alfa)."
+
+**Tecnología:** APIs meteorológicas + cálculo de efemérides automático
+
+#### 2️⃣ "El Laboratorio" - Caracterización de Cámara
+Astroalex necesita conocer tu cámara HOY:
+- Toma 2 Bias + 2 Flats ahora mismo
+- Cálculo automático de **Read Noise, Gain y Full Well Capacity**
+- Perfil guardado para optimizar exposiciones
+
+#### 3️⃣ Selección de Objetivo - El Estratega
+**Opción A:** Astroalex te sugiere objetivos basándose en:
+- Tu FOV (campo de visión)
+- Tu ventana de tiempo
+- Ubicación y altura del objeto
+- Fase lunar
+
+**Opción B:** Escribes "Horsehead" y Astroalex simula el encuadre y valida viabilidad
+
+#### 4️⃣ "Smart Scout" - Análisis de Campo Real
+- Toma UNA foto de prueba (30s)
+- Astroalex analiza:
+  - Contaminación lumínica real
+  - Saturación estelar (detecta si necesitas HDR)
+  - **Calcula exposición óptima** para cada filtro
+
+> "Sky background: 45 e-/s. Detectada saturación en Alnitak.
+> Exposición óptima: 180s (H-alpha), 120s (RGB).
+> Estrategia HDR necesaria para núcleos estelares."
+
+#### 5️⃣ Plan de Vuelo - La Misión
+Astroalex genera el plan completo:
+```
+PLAN OPTIMIZADO PARA HORSEHEAD NEBULA
+───────────────────────────────────────
+Luces:
+  • 120 × 180s (H-alpha)
+  • 30 × 120s (R, G, B)
+
+Calibración:
+  • Darks: 20 × 180s + 20 × 120s
+  • Flats: 20 por filtro
+  • Bias: 50
+
+Exportar: [ASIAIR .plan] [N.I.N.A .json]
+```
+
+**Bonus:** Crea automáticamente la estructura de carpetas del proyecto
+
+---
+
+### Fase DÍA (Pasos 6-8): Procesado & Entrega
+
+#### 6️⃣ "El Mayordomo" - Ingesta Inteligente
+- Vuelcas la SD en `00_ingest/`
+- Click en "Organizar"
+- Astroalex lee metadatos y organiza TODO automáticamente
+- Separa exposiciones HDR si fue necesario
+
+#### 7️⃣ Quality Control - Filtro IA
+**Machine Learning detecta anomalías:**
+- Analiza FWHM, excentricidad, fondo, nº estrellas
+- Detecta nubes, viento, fallos de guiado
+- Mueve imágenes malas a `_Rejected/`
+- Te muestra: "12 imágenes rechazadas (8 nubes, 4 guiado)"
+
+**Tecnología:** Isolation Forest (scikit-learn)
+
+#### 8️⃣ Pipeline de Procesado - Autorun
+El motor central ejecuta automáticamente:
+
+1. **Generación de Masters** (Bias, Darks, Flats)
+2. **Calibración** (aplica masters a Lights)
+3. **Registro** (alinea todas las imágenes)
+4. **Integración**
+   - Apila por filtro
+   - Fusión HDR automática si se requirió
+5. **Preparación Lineal + IA**
+   - Auto-Crop de bordes (dithering)
+   - Extracción de fondo con red neuronal (U-Net)
+   - Linear Fit (iguala brillos RGB)
+6. **Color & Luminancia**
+   - Combinación LRGB/HaLRGB inteligente
+   - **PCC (Photometric Color Calibration)** - balance de blancos real vía APASS/Vizier
+   - Deconvolución ciega (restaura nitidez)
+7. **Acabado**
+   - Auto-Stretch basado en histograma
+   - Reducción de ruido final
+   - Export: **JPG** (redes sociales) + **TIFF 16-bit** (edición fina)
+
+---
+
+## Stack Tecnológico
+
+### Frontend
+- **Next.js 15** + TypeScript + Tailwind CSS
+- Interfaz de wizard paso a paso
+- Visualización FITS integrada
+
+### Backend
+- **Python** + **FastAPI**
+- **Astronomy:** Astropy, CCDProc, Astroalign, Photutils, Reproject, Astroquery
+- **ML/IA:** scikit-learn (Isolation Forest), U-Net (background extraction)
+- **APIs externas:** Meteoblue/OpenMeteo, APASS, Vizier
+
+---
 
 ## Quick Start
 
 ### Requisitos
-
 - Node.js 20+
 - Python 3.11+
-- npm/yarn
-- pip
+- 16GB RAM recomendado
 
 ### Instalación
 
-1. **Clonar el repositorio**
+1. **Clonar repositorio**
 ```bash
 git clone <repository-url>
 cd astroalex
@@ -42,48 +145,40 @@ cd astroalex
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/Mac
 pip install -r requirements.txt
-cp .env.example .env
-cd app
-python main.py
 ```
 
 3. **Frontend**
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
+```
+
+4. **Iniciar Aplicación**
+
+Consulta **START.md** para guía detallada de inicio rápido.
+
+```bash
+# Terminal 1 - Backend
+cd backend
+venv\Scripts\activate
+python -m app.main
+
+# Terminal 2 - Frontend
+cd frontend
 npm run dev
 ```
 
-4. **Acceder a la aplicación**
-- Frontend: http://localhost:3000
-- API: http://localhost:8000
-- Documentación API: http://localhost:8000/docs
+5. **Acceder**
+- 🌐 Frontend: http://localhost:3000
+- 🔧 API: http://localhost:8000
+- 📚 Docs API: http://localhost:8000/docs
 
-## Estructura del Proyecto
+---
 
-```
-astroalex/
-├── frontend/        # Next.js application
-├── backend/         # FastAPI backend
-├── shared/          # Shared types and schemas
-├── docs/            # Documentation
-└── CLAUDE.md        # AI assistant guidance
-```
-
-## Filosofía
-
-Astroalex no es una caja de herramientas, es un **gestor de proyectos**. Asume y se apoya en una estructura de directorios lógica para automatizar el 90% del trabajo tedioso, permitiendo al usuario centrarse en la toma de decisiones de calidad.
-
-## Documentación
-
-- [Guía de Desarrollo](docs/DEVELOPMENT.md)
-- [Especificaciones](SPECS.md)
-- [Guía para Claude Code](CLAUDE.md)
-
-## Estructura de Directorios de Proyectos
+## Estructura de Proyectos
 
 Cada proyecto sigue esta estructura estandarizada:
 
@@ -99,26 +194,118 @@ PROJECT_NAME/
 │   └── science/
 │       └── OBJECT_NAME/
 │           └── DATE/
-│               └── Filter_X/
+│               ├── Filter_X/
+│               └── HDR/          # Si se requirió HDR
 ├── 02_processed_data/
 │   ├── masters/
 │   │   └── SESSION_NAME/
-│   └── science/
-│       └── OBJECT_NAME/
-│           ├── calibrated/
-│           ├── registered/
-│           └── stacked/
-└── 03_scripts/                   # Optional
+│   ├── science/
+│   │   └── OBJECT_NAME/
+│   │       ├── calibrated/
+│   │       ├── registered/
+│   │       ├── stacked/
+│   │       └── final/           # Outputs auto-stretched
+│   └── _Rejected/               # Fallos quality control
+├── 03_scripts/                  # Opcional
+└── session_plan.json            # Flight plan metadata
 ```
+
+---
+
+## Características Clave
+
+### 🎯 Asistente Inteligente
+- Te dice qué hacer en cada momento
+- Cálculos basados en física real (no estimaciones)
+- Recomendaciones personalizadas según condiciones
+
+### 🌤️ Contexto Ambiental
+- Seeing, nubes, jet stream en tiempo real
+- Ventanas de oscuridad astronómica
+- Fase lunar y recomendaciones de filtros
+
+### 📸 Optimización de Adquisición
+- Caracterización de cámara in-situ
+- Cálculo de exposición óptima por filtro
+- Detección automática de necesidad HDR
+- Generación de planes exportables (ASIAIR, N.I.N.A.)
+
+### 🤖 IA & Machine Learning
+- Detección de anomalías (nubes, guiado, viento)
+- Extracción de fondo con redes neuronales
+- Calibración fotométrica automática
+
+### 🔬 Procesado Científico
+- Librerías validadas (Astropy, CCDProc)
+- Preservación de WCS en todo el pipeline
+- Reproducibilidad total con metadata
+
+### 📊 Automatización Completa
+- Del raw al JPG sin intervención manual
+- Solo tomas decisiones de calidad, no tedioso trabajo
+
+---
+
+## Documentación
+
+- 📖 [Guía de Inicio Rápido](START.md)
+- 📋 [Especificaciones V2.0](SPECS.md)
+- 🤖 [Guía para Claude Code](CLAUDE.md)
+- 🛠️ [Guía de Desarrollo](docs/DEVELOPMENT.md)
+
+---
+
+## Estado del Proyecto
+
+### ✅ V1.0 Foundation (Completado)
+- Gestión de proyectos
+- Ingesta inteligente
+- Masters de calibración
+- Pipeline básico de procesado
+- Visualización y export
+
+### 🚧 V2.0 Wizard (En Progreso)
+Prioridades actuales:
+1. Framework de wizard UI
+2. Contexto ambiental (APIs + efemérides)
+3. Caracterización de cámara
+4. Selección inteligente de objetivos
+5. Smart Scout (análisis de prueba)
+6. Generador de Flight Plan
+7. Quality Control con ML
+8. Pipeline mejorado (HDR, PCC, Auto-Stretch)
+
+---
 
 ## Contribuir
 
-Por favor lee la [Guía de Desarrollo](docs/DEVELOPMENT.md) para detalles sobre el proceso de desarrollo y cómo enviar pull requests.
+Lee la [Guía de Desarrollo](docs/DEVELOPMENT.md) para:
+- Arquitectura del código
+- Convenciones de commits
+- Testing strategy
+- Proceso de pull requests
+
+---
 
 ## Licencia
 
 [MIT License](LICENSE)
 
-## Estado del Proyecto
+---
 
-🚧 **En desarrollo activo** - Fase 0 completada, implementando Fase 1 (Gestión de Proyectos + Ingesta)
+## Créditos
+
+Astroalex utiliza y agradece a:
+- **Astropy** - Core astronomy functionality
+- **CCDProc** - Scientific calibration
+- **Astroalign** - Star-based registration
+- **Photutils** - Photometry and quality metrics
+- **scikit-learn** - Machine learning
+- **FastAPI** - High-performance API framework
+- **Next.js** - Modern React framework
+
+---
+
+**¿Listo para la sesión de hoy?** 🌟
+
+Abre Astroalex, deja que analice las condiciones y te guíe hacia la mejor imagen posible.

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 import logging
 
 from app.routers import (
+    session_router,
     projects_router,
     ingestion_router,
     calibration_router,
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(session_router)
 app.include_router(projects_router)
 app.include_router(ingestion_router)
 app.include_router(calibration_router)
@@ -70,7 +72,7 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True

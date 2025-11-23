@@ -6,8 +6,10 @@ from .ingestion import router as ingestion_router
 from .calibration import router as calibration_router
 from .pipeline import router as pipeline_router
 from .visualization import router as visualization_router
+from .session import router as session_router
 
 __all__ = [
+    "session_router",
     "projects_router",
     "ingestion_router",
     "calibration_router",

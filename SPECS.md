@@ -1,71 +1,155 @@
-### Especificaciones de la Aplicación: **Astroalex**
+Aquí tienes el **Documento de Especificaciones Funcionales (V2.0)** para **Astroalex**.
 
-**Tagline:** *Tu pipeline de procesamiento astrofotográfico, automatizado e inteligente. Del caos de datos a la imagen final, con un flujo de trabajo reproducible.*
+Este documento integra toda la lógica técnica que hemos desarrollado (IA, estadística, gestión de archivos, astrofísica) pero reestructura la aplicación bajo un nuevo paradigma: **El Flujo Guiado (Wizard)**.
 
-**Filosofía Central:** Astroalex no es una caja de herramientas, es un gestor de proyectos. Asume y se apoya en una estructura de directorios lógica para automatizar el 90% del trabajo tedioso, permitiendo al usuario centrarse en la toma de decisiones de calidad. El backend está impulsado por Python y las bibliotecas estándar de la astronomía (Astropy, CCDProc, Astroalign, etc.), garantizando resultados científicamente válidos.
+Astroalex deja de ser una "caja de herramientas" pasiva y se convierte en un **Asistente Activo** que lleva al usuario de la mano desde antes de que se ponga el sol hasta la imagen final procesada.
+
+---
+
+# ASTROALEX: Especificaciones Funcionales (V2.0)
+**Visión:** Asistente integral de astrofotografía guiado por datos. Planificación, Adquisición, Gestión y Procesado en un flujo único.
 
 ---
 
-#### **1. Gestión de Proyectos (El Núcleo)**
+## I. EL FLUJO DE USUARIO GUIADO (The User Journey)
 
-*   **Creación de Nuevo Proyecto:** Al crear un proyecto (ej. "Mosaico de Orión"), la aplicación genera automáticamente la estructura de directorios completa que definimos:
-    *   `00_ingest/`
-    *   `01_raw_data/ (calibration/, science/)`
-    *   `02_processed_data/ (masters/, science/)`
-    *   `03_scripts/` (Opcional, para usuarios avanzados)
-*   **Panel de Control del Proyecto:** Una vista principal que muestra el estado del proyecto:
-    *   Resumen de datos crudos (Nº de Lights por filtro, Darks, etc.).
-    *   Estado de los Masters de Calibración (creado / no creado).
-    *   Progreso del apilado por filtro y por panel.
-    *   Vista previa de las imágenes finales generadas.
+La aplicación se estructura en una línea de tiempo cronológica. El usuario no busca herramientas en menús; la aplicación le presenta el paso siguiente lógico.
 
-#### **2. Módulo 1: Ingesta y Organización Inteligente (El "Mayordomo")**
+### PASO 1: Contexto y Medio Ambiente (Al iniciar la app)
+*El usuario abre Astroalex antes de empezar la sesión.*
 
-*   **Zona de Arrastrar y Soltar:** Una ventana que representa la carpeta `00_ingest`. El usuario simplemente arrastra los archivos del ASIAIR aquí.
-*   **Análisis Automático:** La aplicación lee los nombres de archivo y extrae metadatos clave: Tipo de Imagen (Light, Dark, Bias, Flat), Objeto, Filtro, Tiempo de Exposición, Ganancia y Fecha.
-*   **Clasificación con un Clic:** Un botón "Organizar Archivos" que ejecuta la lógica de nuestro script "mayordomo". Mueve cada archivo a su ubicación correcta dentro de `01_raw_data`, creando las subcarpetas necesarias (ej. `M31_Andromeda_Galaxy/2025-10-26/Filter_L/`).
-*   **Manejo de Sesiones:** El usuario define una "Sesión de Calibración" (ej. "2025-10-26_Newton200_ASI533") para que todos los Darks y Flats de esa sesión se agrupen correctamente.
+*   **Entrada:** Geolocalización automática y Hora actual.
+*   **Procesos de Fondo:**
+    *   Consulta a API Meteorológica (Meteoblue/OpenMeteo) para Seeing, Jet Stream y Nubes.
+    *   Cálculo de Efemérides (Ventana de oscuridad astronómica, Fase Lunar).
+*   **Interacción (El Asistente Dice):**
+    > "Buenas noches, Alex. Hoy tienes una ventana de oscuridad de **5h 30m** (23:00 - 04:30).
+    > El Seeing es mediocre (2.5"), por lo que te recomiendo no usar focales extremas o hacer Binning 2x2.
+    > La Luna está al 80%, sugiero trabajar en Banda Estrecha (H-alfa)."
 
-#### **3. Módulo 2: Creación de Masters de Calibración**
+### PASO 2: "El Laboratorio" (Calibración del Equipo)
+*Astroalex necesita conocer la física de la cámara para la noche actual.*
 
-*   **Interfaz Visual:** Una sección dedicada a cada tipo de master (Bias, Darks, Flats).
-*   **Carga Automática:** La aplicación sabe dónde buscar los archivos crudos (ej. en `01_raw_data/calibration/SESSION_NAME/darks/`).
-*   **Inspección y Rechazo:** Muestra miniaturas de todas las tomas. El usuario puede revisarlas rápidamente (usando "Blink") y desmarcar las que tengan artefactos (ej. trazas de satélite en un Dark).
-*   **Parámetros de Combinación:** Menús desplegables simples para elegir el método de combinación (Average, Median) y el de rechazo (Sigma Clipping, Min/Max). Los valores por defecto serán los más recomendados.
-*   **Ejecución:** Un botón "Crear Master" que ejecuta el proceso y guarda el archivo final en la carpeta `02_processed_data/masters/SESSION_NAME/` con un nombre estandarizado (ej. `master_dark_300s_gain100.fits`).
+*   **Interacción:**
+    > "Para optimizar tus tiempos de exposición, necesito caracterizar tu cámara hoy. Por favor, toma ahora mismo **2 Bias** (tapada, tiempo min) y **2 Flats** (a la mitad del histograma) y arrástralos aquí."
+*   **Procesos Internos:**
+    *   Cálculo de **Ruido de Lectura (Read Noise)** real actual.
+    *   Cálculo de **Ganancia (e-/ADU)** y **Full Well Capacity**.
+    *   Guardado del "Perfil de Sensor de la Noche".
+*   **Salida:**
+    > "Perfil actualizado. Tu cámara está rindiendo a **1.5e-** de ruido. El sistema está calibrado."
 
-#### **4. Módulo 3: Pipeline de Procesamiento (El Corazón de la App)**
+### PASO 3: Selección de Objetivo (El Estratega)
+*El usuario decide qué fotografiar con ayuda inteligente.*
 
-Esta es una interfaz visual, modular, donde el usuario define el flujo de trabajo para un objeto.
+*   **Opción A: Sugerencia Inteligente**
+    *   Astroalex cruza: Tu FOV (Campo de visión) + Tu Ventana de Tiempo (Step 1) + Tu Ubicación + Fase Lunar.
+    *   **Algoritmo:** Filtra la base de datos de objetos (NGC/IC/Messier). Descarta objetos muy bajos, muy pequeños para tu pixel scale, o muy grandes para tu sensor.
+    *   **Salida:** Lista de "Mejores Objetivos para Hoy" (Ej: "Nebulosa Roseta - Encaja perfecto en tu sensor, altura óptima a las 01:00").
+*   **Opción B: Selección Manual**
+    *   El usuario escribe "Horsehead". Astroalex muestra el encuadre en un simulador visual y confirma si es viable.
 
-*   **Selección de Datos:** El usuario selecciona el objeto a procesar (ej. "M31") y los filtros a incluir. Si es un mosaico, selecciona los paneles.
-*   **Cadena de Procesos:** Una serie de bloques que representan cada paso:
-    1.  **Calibración:** El usuario arrastra los Masters de Calibración correctos a este bloque. La app sugiere los correctos basándose en la fecha y los metadatos.
-    2.  **Análisis de Calidad:** (Opcional) Un bloque que mide FWHM (nitidez) y excentricidad de las estrellas en las tomas calibradas, permitiendo al usuario descartar las que estén por debajo de un umbral de calidad.
-    3.  **Registro (Alineación):** Un bloque que alinea todas las imágenes a una de referencia. Parámetros simples (ej. "Usar Astroalign").
-    4.  **Apilado (Integración):** El bloque final. El usuario elige el método de combinación y rechazo, igual que en los masters.
-*   **Ejecución del Pipeline:** Un gran botón "Ejecutar" que procesa todo el lote. Los resultados intermedios (calibrados, registrados) se guardan en sus respectivas carpetas dentro de `02_processed_data/science/OBJECT_NAME/`. El apilado final se guarda en `stacked/`.
+### PASO 4: "Smart Scout" (Análisis de Campo Real)
+*Validación empírica de la exposición.*
 
-#### **5. Módulo 4: Ensamblaje de Mosaicos y Combinación de Color**
+*   **Interacción:**
+    > "Apunta al objeto y toma una sola foto de prueba (ej. 30s, filtro L o sin filtro). Arrástrala aquí."
+*   **Análisis IA/Matemático:**
+    *   **Análisis de Cielo:** Mide la contaminación lumínica en electrones/segundo.
+    *   **Análisis de Rango Dinámico:** Detecta saturación estelar. Si el núcleo del objeto quema más del 3% de píxeles, activa el flag **"HDR Necesario"**.
+    *   **Cálculo de Exposición:** Aplica la fórmula de exposición óptima ($SkyNoise > 10 \times ReadNoise^2$) usando los datos del Paso 2.
 
-*   **Ensamblaje de Mosaico:** Una herramienta que toma los apilados finales de cada panel (ej. `Panel1_L.fits`, `Panel2_L.fits`) y los une.
-    *   **Detección Automática:** La app lee los WCS de los archivos FITS para saber cómo encajan.
-    *   **Parámetros:** Opciones para la igualación de fondo y el método de proyección.
-*   **Combinación de Color:**
-    *   **LRGB:** Ventana con 4 ranuras (L, R, G, B) donde el usuario arrastra sus imágenes apiladas. Controles deslizantes para el balance de color y la saturación de luminancia.
-    *   **HaLRGB / SHO:** Mapeo de canales flexible. El usuario puede asignar cualquier imagen a cualquier canal (ej. Hα a Rojo, SII a Verde, etc.). Incluye una herramienta "PixelMath" simplificada para mezclas avanzadas (ej. `R = 0.8*Ha + 0.2*R`).
+### PASO 5: Generación del Plan de Vuelo (La Misión)
+*Astroalex redacta las instrucciones precisas.*
 
-#### **6. Módulo 5: Visualización y Herramientas Finales**
-
-*   **Visor de FITS:** Un visor integrado de alto rango dinámico.
-*   **Estiramiento de Histograma No Destructivo:** Herramienta visual para aplicar estiramientos (Asinh, Log, Linear) y ver el resultado en tiempo real. La transformación se guarda como una "receta" y no modifica el archivo lineal subyacente.
-*   **Extracción de Fondo:** Herramienta que permite seleccionar puntos del fondo o usar un método automático (ABE/DBE) para eliminar gradientes.
-*   **Exportación:** Exporta la imagen final (lineal o estirada) a formatos como FITS, TIFF (16-bit) o JPG para compartir.
+*   **Lógica:** Combina el tiempo disponible (Paso 1) con la exposición óptima (Paso 4) y la estructura del objeto (Paso 3).
+*   **Salida (El Plan):**
+    > **Plan Optimizado para Horsehead Nebula:**
+    > *   **Luces (Lights):**
+    >     *   120 x 180s (H-alpha) - *Limitado por saturación de Alnitak.*
+    >     *   30 x 120s (R, G, B)
+    > *   **Calibración Necesaria:**
+    >     *   Darks: 20 x 180s, 20 x 120s.
+    >     *   Flats: 20 por filtro.
+    >     *   Bias: 50.
+*   **Acción:** Botones "Exportar a ASIAIR (.plan)" y "Exportar a N.I.N.A.".
+*   **Preparación de Carpetas:** Astroalex crea automáticamente la estructura de directorios (`00_Ingest`, `01_Raw`, etc.) en el disco duro del usuario.
 
 ---
-**Stack Tecnológico:**
-*   **Backend:** Python
-*   **Librerías Principales:** Astropy, CCDProc, Astroalign, Photutils, Reproject, NumPy.
-*   **Interfaz Gráfica:** PyQt / PySide para una aplicación de escritorio nativa, o un framework como Electron para una interfaz basada en tecnologías web.
+*(Aquí termina la fase de "Noche". Al día siguiente, comienza la fase de "Día".)*
+---
 
-Esta aplicación sería un "game-changer" porque no compite en tener mil algoritmos, sino en ofrecer un **flujo de trabajo increíblemente eficiente, lógico y reproducible** que guía al usuario desde el caos inicial hasta un resultado de alta calidad.
+### PASO 6: El "Mayordomo" (Ingesta y Organización)
+*El usuario vuelca la tarjeta SD en la carpeta `00_Ingest`.*
+
+*   **Acción:** Clic en "Organizar y Procesar".
+*   **Proceso Automático:**
+    *   El script lee los metadatos FITS.
+    *   Mueve cada archivo a su carpeta correspondiente (`01_Raw/Science/Object/Filter...`).
+    *   Separa las tomas HDR (cortas vs largas) si el plan lo requería.
+
+### PASO 7: "Quality Control" (El Filtro IA)
+*Limpieza de datos antes de cocinar.*
+
+*   **Tecnología:** Machine Learning No Supervisado (Isolation Forest).
+*   **Proceso:**
+    *   Analiza estadísticas de cada imagen (FWHM, Excentricidad, Fondo, Nº Estrellas).
+    *   Detecta anomalías (nubes, golpes de viento, fallos de guiado).
+    *   Mueve las imágenes rechazadas a una carpeta `_Rejected`.
+*   **Feedback:** Muestra un gráfico: "Se han rechazado 12 imágenes (8 por nubes, 4 por guiado)".
+
+### PASO 8: El Pipeline de Procesado (Autorun)
+*El motor central se pone en marcha.*
+
+1.  **Generación de Masters:** Crea Bias, Darks y Flats maestros.
+2.  **Calibración:** Aplica los masters a los Lights aceptados.
+3.  **Registro:** Alinea todas las imágenes (usando *astroalign*).
+4.  **Integración (Stacking):**
+    *   Apila por filtro.
+    *   Si hay HDR, fusiona automáticamente las tomas cortas y largas en este punto.
+    *   Salida: Masters Lineales L, R, G, B (y H-alpha).
+5.  **Linear Prep & IA:**
+    *   **Auto-Crop:** Recorta bordes de dithering.
+    *   **AI Background Extraction:** Red neuronal (U-Net) detecta gradientes y los elimina.
+    *   **Linear Fit:** Iguala brillos RGB.
+6.  **Color & Luminancia:**
+    *   Combinación LRGB (o HaLRGB inteligente).
+    *   **PCC (Photometric Color Calibration):** Conexión a base de datos APASS/Vizier para balance de blancos real.
+    *   Deconvolución ciega (restauración de nitidez).
+7.  **Transformación y Acabado:**
+    *   Estirado automático (Auto-Stretch basado en histograma).
+    *   Reducción de ruido final.
+    *   Generación de JPG para redes sociales y TIFF 16-bit para edición fina manual.
+
+---
+
+## II. ARQUITECTURA TÉCNICA
+
+### Stack Tecnológico
+*   **Interfaz (Frontend):** Next.js 15+ frontend with TypeScript and Tailwind CSS
+*   **Motor (Backend):** FastAPI backend with Python.
+*   **Librerías Clave:**
+    *   `astropy` (Núcleo astronómico).
+    *   `ccdproc` (Calibración y procesado).
+    *   `photutils` (Estadística y fotometría).
+    *   `scikit-learn` (ML para Quality Control).
+    *   `reproject` / `montage-wrapper` (Mosaicos).
+    *   `astroquery` (Conexión a Meteoblue, Vizier, Simbad).
+
+### Bases de Datos Internas
+1.  **DB Sensores:** Lista pre-poblada de cámaras comunes (ZWO, QHY, ToupTek) con specs base (para usar si el usuario salta el Paso 2).
+2.  **DB Objetos:** Catálogo simplificado NGC/IC/Messier con coordenadas, tamaño angular y magnitud superficial (para el Paso 3).
+
+### Requisitos de Hardware
+*   **CPU:** Multicore (para apilado paralelo).
+*   **RAM:** 16GB mínimo recomendado.
+*   **GPU:** Opcional (aceleraría la extracción de fondo IA y Starnet si se integra, pero el ML estadístico corre en CPU).
+
+---
+
+## III. DIFERENCIACIÓN DE MERCADO
+
+Astroalex no compite con PixInsight en cantidad de herramientas matemáticas manuales. Compite ofreciendo **Certeza y Flujo**.
+
+*   **PixInsight:** "Aquí tienes 500 martillos, construye tu casa."
+*   **Astroalex:** "Dime qué casa quieres, he analizado el terreno, he pedido los materiales exactos y aquí tienes las llaves."
