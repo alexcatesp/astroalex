@@ -112,6 +112,15 @@ export default function StorageSetup({ onComplete, onBack }: StorageSetupProps) 
               className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-blue-600"
               placeholder="D:\Astrofoto\Processed"
             />
+            {validation?.processed_data_path && (
+              <div className={`text-xs mt-1 ${validation.processed_data_path.valid ? 'text-green-400' : 'text-red-400'}`}>
+                {validation.processed_data_path.valid
+                  ? validation.processed_data_path.exists
+                    ? '✓ Directorio válido y existe'
+                    : '✓ Directorio válido (se creará automáticamente)'
+                  : '✗ Ruta inválida'}
+              </div>
+            )}
           </div>
 
           {/* Projects Path */}
@@ -129,6 +138,15 @@ export default function StorageSetup({ onComplete, onBack }: StorageSetupProps) 
               className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-blue-600"
               placeholder="D:\Astrofoto\Projects"
             />
+            {validation?.projects_path && (
+              <div className={`text-xs mt-1 ${validation.projects_path.valid ? 'text-green-400' : 'text-red-400'}`}>
+                {validation.projects_path.valid
+                  ? validation.projects_path.exists
+                    ? '✓ Directorio válido y existe'
+                    : '✓ Directorio válido (se creará automáticamente)'
+                  : '✗ Ruta inválida'}
+              </div>
+            )}
           </div>
 
           {/* Cache Path */}
@@ -146,6 +164,15 @@ export default function StorageSetup({ onComplete, onBack }: StorageSetupProps) 
               className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white font-mono focus:outline-none focus:border-blue-600"
               placeholder="D:\Astrofoto\Cache"
             />
+            {validation?.cache_path && (
+              <div className={`text-xs mt-1 ${validation.cache_path.valid ? 'text-green-400' : 'text-red-400'}`}>
+                {validation.cache_path.valid
+                  ? validation.cache_path.exists
+                    ? '✓ Directorio válido y existe'
+                    : '✓ Directorio válido (se creará automáticamente)'
+                  : '✗ Ruta inválida'}
+              </div>
+            )}
           </div>
         </div>
 

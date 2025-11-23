@@ -264,6 +264,29 @@ function EquipmentForm({ profile, onClose, onSave }: any) {
     filters: profile?.filters || [],
   });
 
+  const [newFilter, setNewFilter] = useState({
+    name: '',
+    type: 'broadband',
+    manufacturer: '',
+    size: '1.25"',
+  });
+
+  const handleAddFilter = () => {
+    if (!newFilter.name) return;
+    setFormData({
+      ...formData,
+      filters: [...formData.filters, { ...newFilter }],
+    });
+    setNewFilter({ name: '', type: 'broadband', manufacturer: '', size: '1.25"' });
+  };
+
+  const handleRemoveFilter = (index: number) => {
+    setFormData({
+      ...formData,
+      filters: formData.filters.filter((_: any, i: number) => i !== index),
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -352,6 +375,15 @@ function EquipmentForm({ profile, onClose, onSave }: any) {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Sensor Height (px)</label>
+              <input
+                type="number"
+                value={formData.camera.sensor_height}
+                onChange={(e) => setFormData({ ...formData, camera: { ...formData.camera, sensor_height: parseInt(e.target.value) } })}
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Pixel Size (µm)</label>
               <input
                 type="number"
@@ -360,6 +392,43 @@ function EquipmentForm({ profile, onClose, onSave }: any) {
                 onChange={(e) => setFormData({ ...formData, camera: { ...formData.camera, pixel_size: parseFloat(e.target.value) } })}
                 className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Tipo de Sensor</label>
+              <select
+                value={formData.camera.color ? 'color' : 'mono'}
+                onChange={(e) => setFormData({ ...formData, camera: { ...formData.camera, color: e.target.value === 'color' } })}
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              >
+                <option value="color">Color (OSC/DSLR)</option>
+                <option value="mono">Monocromático</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Bit Depth</label>
+              <select
+                value={formData.camera.bit_depth}
+                onChange={(e) => setFormData({ ...formData, camera: { ...formData.camera, bit_depth: parseInt(e.target.value) } })}
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              >
+                <option value="12">12 bits</option>
+                <option value="14">14 bits</option>
+                <option value="16">16 bits</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Enfriamiento</label>
+              <div className="flex items-center h-full">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.camera.cooling}
+                    onChange={(e) => setFormData({ ...formData, camera: { ...formData.camera, cooling: e.target.checked } })}
+                    className="w-5 h-5 bg-gray-900 border-gray-700 rounded text-blue-600 focus:ring-blue-600"
+                  />
+                  <span className="ml-2 text-gray-300">Cámara refrigerada</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -408,6 +477,100 @@ function EquipmentForm({ profile, onClose, onSave }: any) {
               />
             </div>
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4">🎨 Filtros</h3>
+
+          {/* Existing Filters List */}
+          {formData.filters.length > 0 && (
+            <div className="mb-4 space-y-2">
+              {formData.filters.map((filter: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="px-3 py-1 bg-blue-600 text-white rounded font-medium text-sm">
+                      {filter.name}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {filter.type === 'narrowband' ? '📊 Narrowband' :
+                       filter.type === 'broadband' ? '🌈 Broadband' :
+                       filter.type === 'luminance' ? '⚪ Luminance' :
+                       filter.type === 'rgb' ? '🔴🟢🔵 RGB' : filter.type}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {filter.manufacturer} • {filter.size}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFilter(index)}
+                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add New Filter */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Nombre del Filtro</label>
+              <input
+                type="text"
+                value={newFilter.name}
+                onChange={(e) => setNewFilter({ ...newFilter, name: e.target.value })}
+                placeholder="ej: L-Pro, Ha, OIII, R, G, B"
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Tipo</label>
+              <select
+                value={newFilter.type}
+                onChange={(e) => setNewFilter({ ...newFilter, type: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              >
+                <option value="broadband">Broadband (L-Pro, UV/IR Cut)</option>
+                <option value="narrowband">Narrowband (Ha, OIII, SII)</option>
+                <option value="luminance">Luminance (L)</option>
+                <option value="rgb">RGB (Red/Green/Blue)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Fabricante</label>
+              <input
+                type="text"
+                value={newFilter.manufacturer}
+                onChange={(e) => setNewFilter({ ...newFilter, manufacturer: e.target.value })}
+                placeholder="ej: Optolong, Baader, ZWO"
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Tamaño</label>
+              <select
+                value={newFilter.size}
+                onChange={(e) => setNewFilter({ ...newFilter, size: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
+              >
+                <option value='1.25"'>1.25"</option>
+                <option value='2"'>2"</option>
+                <option value="31mm">31mm (ZWO drawer)</option>
+                <option value="36mm">36mm</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddFilter}
+            disabled={!newFilter.name}
+            className="mt-4 w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+          >
+            + Agregar Filtro
+          </button>
         </div>
 
         {/* Actions */}

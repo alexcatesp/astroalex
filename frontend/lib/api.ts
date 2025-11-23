@@ -202,7 +202,7 @@ export class ApiClient {
   }
 
   async updateUserState(updates: any) {
-    return this.post<any>('/config/user-state', updates);
+    return this.patch<any>('/config/user-state', updates);
   }
 
   async getStorageConfig() {
