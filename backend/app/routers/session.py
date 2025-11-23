@@ -74,30 +74,34 @@ def delete_session(session_id: str):
 
 # STEP 1: Environmental Context
 @router.post("/{session_id}/step1/context", response_model=ObservingSession)
-def calculate_context(session_id: str, location: GeoLocation):
+def calculate_context(session_id: str):
     """
     Step 1: Calculate environmental context
 
     - Calculate ephemeris (darkness window, moon phase)
-    - Get sky conditions (placeholder for now)
+    - Get sky conditions (from weather API)
     - Generate observing recommendations
+
+    Uses the location from the session (set during creation)
     """
     session = session_service.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Calculate ephemeris
-    ephemeris = env_service.calculate_ephemeris(location)
+    if not session.location:
+        raise HTTPException(status_code=400, detail="Session must have a location set")
 
-    # Get sky conditions (placeholder)
-    conditions = env_service.get_sky_conditions(location)
+    # Calculate ephemeris
+    ephemeris = env_service.calculate_ephemeris(session.location, session.date)
+
+    # Get sky conditions
+    conditions = env_service.get_sky_conditions(session.location)
 
     # Generate recommendations
-    recommendation_msg = env_service.generate_recommendations(conditions, ephemeris)
+    recommendation = env_service.generate_recommendations(conditions, ephemeris)
 
     # Update session
     update_data = SessionUpdate(
-        location=location,
         conditions=conditions,
         ephemeris=ephemeris,
         status="step1_context"
@@ -108,8 +112,8 @@ def calculate_context(session_id: str, location: GeoLocation):
     session = session_service.add_message(
         session_id,
         step="step1_context",
-        message=recommendation_msg.message,
-        data=recommendation_msg.data
+        message=recommendation.message,
+        data=recommendation.data
     )
 
     return session

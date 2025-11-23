@@ -179,6 +179,7 @@ class ObservingSession(BaseModel):
 class SessionCreate(BaseModel):
     """Request to create a new session"""
     name: str = Field(..., min_length=1, max_length=200)
+    date: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Date of observing session")
     location: Optional[GeoLocation] = None
     equipment_profile_id: Optional[str] = None
 

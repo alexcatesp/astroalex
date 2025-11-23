@@ -34,7 +34,9 @@ class SessionService:
         session = ObservingSession(
             id=session_id,
             name=session_data.name,
+            date=session_data.date or datetime.utcnow(),
             location=session_data.location,
+            equipment_profile_id=session_data.equipment_profile_id,
             status=SessionStatus.CREATED,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
