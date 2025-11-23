@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import Step1Environmental from './Step1Environmental';
 import Step2Characterization from './Step2Characterization';
 import Step3TargetSelection from './Step3TargetSelection';
+import Step4ScoutFrame from './Step4ScoutFrame';
+import Step5FlightPlan from './Step5FlightPlan';
 
 interface SessionWizardProps {
   sessionId?: string;
@@ -152,16 +154,18 @@ export default function SessionWizard({ sessionId, onComplete, onCancel }: Sessi
           />
         )}
         {currentStep === 4 && (
-          <div className="p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Step 4: Scout Frame</h2>
-            <p className="text-gray-400">Próximamente...</p>
-          </div>
+          <Step4ScoutFrame
+            session={session}
+            onComplete={handleStepComplete}
+            onBack={() => setCurrentStep(3)}
+          />
         )}
         {currentStep === 5 && (
-          <div className="p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Step 5: Flight Plan</h2>
-            <p className="text-gray-400">Próximamente...</p>
-          </div>
+          <Step5FlightPlan
+            session={session}
+            onComplete={onComplete}
+            onBack={() => setCurrentStep(4)}
+          />
         )}
       </div>
     </div>
