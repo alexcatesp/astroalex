@@ -9,6 +9,8 @@ import logging
 
 from app.routers import (
     session_router,
+    equipment_router,
+    config_router,
     projects_router,
     ingestion_router,
     calibration_router,
@@ -29,13 +31,13 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Astroalex API",
     description="Astrophotography Processing Pipeline Backend",
-    version="0.1.0"
+    version="2.0.0"
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js dev server
+    allow_origins=["http://localhost:3000", "http://localhost:3002"],  # Next.js dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +45,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(session_router)
+app.include_router(equipment_router)
+app.include_router(config_router)
 app.include_router(projects_router)
 app.include_router(ingestion_router)
 app.include_router(calibration_router)

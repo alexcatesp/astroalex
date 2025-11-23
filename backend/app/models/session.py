@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 from pydantic import BaseModel, Field
 from enum import Enum
+from .common import GeoLocation
 
 
 class SessionStatus(str, Enum):
@@ -19,15 +20,6 @@ class SessionStatus(str, Enum):
     STEP7_QUALITY = "step7_quality"
     STEP8_PROCESSING = "step8_processing"
     COMPLETED = "completed"
-
-
-class GeoLocation(BaseModel):
-    """Geographic location"""
-    latitude: float = Field(..., ge=-90, le=90, description="Latitude in degrees")
-    longitude: float = Field(..., ge=-180, le=180, description="Longitude in degrees")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
-    timezone: str = Field(..., description="Timezone (e.g., 'America/New_York')")
-    name: Optional[str] = Field(None, description="Location name")
 
 
 class SkyConditions(BaseModel):
@@ -150,6 +142,9 @@ class ObservingSession(BaseModel):
     date: datetime = Field(default_factory=datetime.utcnow)
     status: SessionStatus = Field(default=SessionStatus.CREATED)
 
+    # Equipment profile reference
+    equipment_profile_id: Optional[str] = Field(None, description="Reference to equipment profile used")
+
     # Location and conditions (Step 1)
     location: Optional[GeoLocation] = None
     conditions: Optional[SkyConditions] = None
@@ -185,6 +180,7 @@ class SessionCreate(BaseModel):
     """Request to create a new session"""
     name: str = Field(..., min_length=1, max_length=200)
     location: Optional[GeoLocation] = None
+    equipment_profile_id: Optional[str] = None
 
 
 class SessionUpdate(BaseModel):

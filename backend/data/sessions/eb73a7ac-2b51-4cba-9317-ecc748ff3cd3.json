@@ -1,0 +1,65 @@
+{
+  "id": "eb73a7ac-2b51-4cba-9317-ecc748ff3cd3",
+  "name": "Test Session Orion",
+  "date": "2025-11-23 16:49:23.503821",
+  "status": "step1_context",
+  "location": {
+    "latitude": -90.0,
+    "longitude": -180.0,
+    "elevation": 0.0,
+    "timezone": "string",
+    "name": "string"
+  },
+  "conditions": {
+    "seeing": 2.5,
+    "clouds": 30,
+    "jet_stream": 25.0,
+    "transparency": 75,
+    "humidity": 60,
+    "wind_speed": 5.0,
+    "temperature": 15.0,
+    "source": "placeholder",
+    "timestamp": "2025-11-23 17:10:23.287356"
+  },
+  "ephemeris": {
+    "darkness_start": "2025-11-23 13:00:00",
+    "darkness_end": "2025-11-23 23:00:00",
+    "darkness_duration": 10.0,
+    "moon_phase": 0.10455391926073099,
+    "moon_illumination": 10,
+    "moon_alt": null,
+    "sun_set": "2025-11-23 12:00:00",
+    "sun_rise": "2025-11-24 00:00:00",
+    "astronomical_twilight_start": "2025-11-23 13:00:00",
+    "astronomical_twilight_end": "2025-11-23 23:00:00"
+  },
+  "camera_profile": null,
+  "target": null,
+  "fov_simulation": null,
+  "scout_analysis": null,
+  "acquisition_plan": null,
+  "project_id": null,
+  "project_path": null,
+  "messages": [
+    {
+      "step": "created",
+      "message": "Sesi\u00f3n 'Test Session Orion' creada. Empecemos analizando las condiciones de observaci\u00f3n.",
+      "timestamp": "2025-11-23 16:49:23.503848",
+      "data": null
+    },
+    {
+      "step": "step1_context",
+      "message": "Buenas tardes. Tienes **10h 0m** de oscuridad astron\u00f3mica (13:00 - 23:00). El Seeing es moderado (2.5\"), adecuado para cielo profundo. Considera Binning 2x2 si usas focales largas. Luna al 10%, excelente para objetos d\u00e9biles en banda ancha (LRGB).",
+      "timestamp": "2025-11-23 17:10:23.287383",
+      "data": {
+        "seeing": 2.5,
+        "clouds": 30,
+        "moon_illumination": 10,
+        "darkness_hours": 10.0
+      }
+    }
+  ],
+  "created_at": "2025-11-23 16:49:23.503798",
+  "updated_at": "2025-11-23 17:10:23.287391",
+  "completed_at": null
+}

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "8e4155f2-f215-4ff1-81e7-125c977346cc",
+    "name": "Setup Principal",
+    "description": "Mi equipo principal con ASI294MC Pro",
+    "camera": {
+      "model": "ZWO ASI294MC Pro",
+      "manufacturer": "ZWO",
+      "sensor_width": 4144,
+      "sensor_height": 2822,
+      "pixel_size": 4.63,
+      "read_noise": null,
+      "gain": null,
+      "full_well_capacity": null,
+      "color": true,
+      "cooling": true,
+      "bit_depth": 16
+    },
+    "telescope": {
+      "name": "Refractor 80mm",
+      "manufacturer": "William Optics",
+      "focal_length": 600,
+      "aperture": 80,
+      "focal_ratio": 7.5,
+      "telescope_type": "refractor"
+    },
+    "mount": null,
+    "filters": [
+      {
+        "name": "L-Pro",
+        "type": "broadband",
+        "bandwidth": null,
+        "central_wavelength": null
+      }
+    ],
+    "default_location": null,
+    "is_active": true,
+    "created_at": "2025-11-23 22:37:00.413758",
+    "updated_at": "2025-11-23 22:37:00.413783"
+  }
+]

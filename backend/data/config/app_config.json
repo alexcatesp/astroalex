@@ -1,0 +1,18 @@
+{
+  "user_state": {
+    "first_time": true,
+    "has_equipment_profile": true,
+    "has_characterized_camera": false,
+    "onboarding_completed": false,
+    "active_equipment_profile_id": "8e4155f2-f215-4ff1-81e7-125c977346cc",
+    "last_location": null,
+    "preferred_units": "metric",
+    "language": "es",
+    "theme": "dark",
+    "storage_configured": false,
+    "storage_config": null
+  },
+  "storage": null,
+  "meteoblue_api_key": null,
+  "astrometry_api_key": null
+}

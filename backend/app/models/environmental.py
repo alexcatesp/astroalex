@@ -2,7 +2,7 @@
 Data models for environmental context and astronomical calculations
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field
 
 
