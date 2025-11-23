@@ -160,6 +160,83 @@ export class ApiClient {
       `/projects/${projectId}/calibration/masters/${masterId}?delete_file=${deleteFile}`
     );
   }
+
+  // ========== V2.0 Equipment & Config APIs ==========
+
+  // Equipment Profiles
+  async getEquipmentProfiles() {
+    return this.get<any[]>('/equipment/profiles/');
+  }
+
+  async getActiveEquipmentProfile() {
+    return this.get<any>('/equipment/profiles/active');
+  }
+
+  async getEquipmentProfile(id: string) {
+    return this.get<any>(`/equipment/profiles/${id}`);
+  }
+
+  async createEquipmentProfile(data: any) {
+    return this.post<any>('/equipment/profiles/', data);
+  }
+
+  async updateEquipmentProfile(id: string, data: any) {
+    return this.put<any>(`/equipment/profiles/${id}`, data);
+  }
+
+  async deleteEquipmentProfile(id: string) {
+    return this.delete<void>(`/equipment/profiles/${id}`);
+  }
+
+  async activateEquipmentProfile(id: string) {
+    return this.post<any>(`/equipment/profiles/${id}/activate`, {});
+  }
+
+  // Configuration & User State
+  async getAppConfig() {
+    return this.get<any>('/config/');
+  }
+
+  async getUserState() {
+    return this.get<any>('/config/user-state');
+  }
+
+  async updateUserState(updates: any) {
+    return this.post<any>('/config/user-state', updates);
+  }
+
+  async getStorageConfig() {
+    return this.get<any>('/config/storage');
+  }
+
+  async setStorageConfig(config: any) {
+    return this.put<any>('/config/storage', config);
+  }
+
+  async completeOnboarding() {
+    return this.post<any>('/config/onboarding/complete', {});
+  }
+
+  // Sessions (V2.0)
+  async getSessions() {
+    return this.get<any[]>('/sessions/');
+  }
+
+  async getSession(id: string) {
+    return this.get<any>(`/sessions/${id}`);
+  }
+
+  async createSession(data: any) {
+    return this.post<any>('/sessions/', data);
+  }
+
+  async updateSession(id: string, data: any) {
+    return this.post<any>(`/sessions/${id}`, data);
+  }
+
+  async deleteSession(id: string) {
+    return this.delete<void>(`/sessions/${id}`);
+  }
 }
 
 // Export singleton instance
