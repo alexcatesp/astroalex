@@ -9,10 +9,15 @@
     "preferred_units": "metric",
     "language": "es",
     "theme": "dark",
-    "storage_configured": false,
+    "storage_configured": true,
     "storage_config": null
   },
-  "storage": null,
+  "storage": {
+    "raw_data_path": "E:\\Astrofoto\\Raw",
+    "processed_data_path": "E:\\Astrofoto\\Processed",
+    "projects_path": "E:\\Astrofoto\\Projects",
+    "cache_path": "E:\\Astrofoto\\Cache"
+  },
   "meteoblue_api_key": null,
   "astrometry_api_key": null
 }

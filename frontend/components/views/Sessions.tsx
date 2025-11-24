@@ -9,6 +9,8 @@ export default function Sessions() {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | undefined>();
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   useEffect(() => {
     loadSessions();
@@ -39,6 +41,83 @@ export default function Sessions() {
     setShowWizard(false);
     setSelectedSessionId(undefined);
     await loadSessions();
+  };
+
+  const handleStartRename = (e: React.MouseEvent, sessionId: string, currentName: string) => {
+    e.stopPropagation();
+    setEditingSessionId(sessionId);
+    setEditingName(currentName);
+  };
+
+  const handleCancelRename = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSessionId(null);
+    setEditingName('');
+  };
+
+  const handleSaveRename = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (!editingName.trim()) {
+      alert('El nombre no puede estar vacío');
+      return;
+    }
+
+    try {
+      await apiClient.updateSession(sessionId, { name: editingName.trim() });
+      await loadSessions();
+      setEditingSessionId(null);
+      setEditingName('');
+    } catch (error) {
+      console.error('Error renaming session:', error);
+      alert('Error al renombrar la sesión');
+    }
+  };
+
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string, sessionName: string) => {
+    e.stopPropagation();
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar la sesión "${sessionName}"?\n\nEsta acción no se puede deshacer.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await apiClient.deleteSession(sessionId);
+      await loadSessions();
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      alert('Error al eliminar la sesión');
+    }
+  };
+
+  const getStepProgress = (session: any) => {
+    const steps = [
+      { key: 'ephemeris', label: 'Contexto' },
+      { key: 'camera_profile', label: 'Cámara' },
+      { key: 'target', label: 'Objetivo' },
+      { key: 'scout_analysis', label: 'Scout' },
+      { key: 'acquisition_plan', label: 'Plan' },
+    ];
+
+    const completedSteps = steps.filter(step => session[step.key]).length;
+    return { completed: completedSteps, total: steps.length };
+  };
+
+  const getSeeingColor = (seeing: number) => {
+    if (seeing < 1.5) return 'text-green-400';
+    if (seeing < 2.0) return 'text-lime-400';
+    if (seeing < 2.5) return 'text-yellow-400';
+    if (seeing < 3.5) return 'text-orange-400';
+    return 'text-red-400';
+  };
+
+  const getCloudsColor = (clouds: number) => {
+    if (clouds < 10) return 'text-green-400';
+    if (clouds < 30) return 'text-lime-400';
+    if (clouds < 50) return 'text-yellow-400';
+    if (clouds < 70) return 'text-orange-400';
+    return 'text-red-400';
   };
 
   if (showWizard) {
@@ -94,59 +173,195 @@ export default function Sessions() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sessions.map((session: any) => (
-            <div
-              key={session.id}
-              onClick={() => handleOpenSession(session.id)}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-600 cursor-pointer transition-all hover:shadow-lg hover:shadow-blue-900/50"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-white mb-1">
-                    {session.name}
-                  </h3>
-                  <div className="text-sm text-gray-400">
-                    {new Date(session.date).toLocaleDateString()}
+        <div className="space-y-4">
+          {sessions.map((session: any) => {
+            const progress = getStepProgress(session);
+            const progressPercentage = (progress.completed / progress.total) * 100;
+
+            return (
+              <div
+                key={session.id}
+                onClick={() => handleOpenSession(session.id)}
+                className="bg-gray-800 rounded-xl p-6 border-2 border-gray-700 hover:border-blue-600 cursor-pointer transition-all hover:shadow-xl hover:shadow-blue-900/30"
+              >
+                {/* Header with name, edit button, and delete button */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    {editingSessionId === session.id ? (
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveRename(e as any, session.id);
+                            if (e.key === 'Escape') handleCancelRename(e as any);
+                          }}
+                        />
+                        <button
+                          onClick={(e) => handleSaveRename(e, session.id)}
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={handleCancelRename}
+                          className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                        >
+                          ✗
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-white">
+                          {session.name}
+                        </h3>
+                        {progressPercentage === 100 && (
+                          <span className="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full">
+                            COMPLETA
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {editingSessionId !== session.id && (
+                      <div className="text-sm text-gray-400">
+                        {new Date(session.date).toLocaleDateString('es-ES', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  {editingSessionId !== session.id && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => handleStartRename(e, session.id, session.name)}
+                        className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                        title="Renombrar sesión"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteSession(e, session.id, session.name)}
+                        className="px-3 py-2 bg-red-900 hover:bg-red-800 text-red-200 rounded-lg transition-colors"
+                        title="Eliminar sesión"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Session Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Progress & Status */}
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">📊 PROGRESO</div>
+                    <div className="mb-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-gray-400">Wizard</span>
+                        <span className="text-xs text-gray-400">{progress.completed}/{progress.total}</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
+                          style={{ width: `${progressPercentage}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                        progressPercentage === 100
+                          ? 'bg-green-900/50 text-green-300 border border-green-700'
+                          : progressPercentage > 0
+                          ? 'bg-blue-900/50 text-blue-300 border border-blue-700'
+                          : 'bg-gray-700/50 text-gray-300 border border-gray-600'
+                      }`}
+                    >
+                      {progressPercentage === 100 ? '✓ Completa' : progressPercentage > 0 ? '⏳ En progreso' : '📝 Nueva'}
+                    </span>
+                  </div>
+
+                  {/* Environmental Conditions */}
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">🌙 CONDICIONES</div>
+                    <div className="space-y-2">
+                      {session.ephemeris && (
+                        <>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400">Oscuridad:</span>
+                            <span className="text-white font-medium">
+                              {session.ephemeris.darkness_duration_formatted ||
+                               `${Math.floor(session.ephemeris.darkness_duration)}h ${Math.round((session.ephemeris.darkness_duration % 1) * 60)}m`}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400">Luna:</span>
+                            <span className="text-white font-medium">{session.ephemeris.moon_illumination}%</span>
+                          </div>
+                        </>
+                      )}
+                      {session.conditions && (
+                        <>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400">Seeing:</span>
+                            <span className={`font-bold ${getSeeingColor(session.conditions.seeing)}`}>
+                              {session.conditions.seeing}"
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400">Nubes:</span>
+                            <span className={`font-bold ${getCloudsColor(session.conditions.clouds)}`}>
+                              {session.conditions.clouds}%
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {session.location && (
+                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+                          <span>📍</span>
+                          <span>{session.location.name || 'Ubicación'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Target & Equipment */}
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-2">🎯 OBJETIVO</div>
+                    {session.target ? (
+                      <div>
+                        <div className="font-semibold text-white mb-1">{session.target.name}</div>
+                        <div className="text-sm text-gray-400">
+                          {session.target.catalog_id || session.target.object_type || 'Deep Sky'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          RA: {session.target.ra?.toFixed(2)}° • Dec: {session.target.dec?.toFixed(2)}°
+                          {session.target.size && (
+                            <>
+                              <br />
+                              Tamaño: {session.target.size}' arcmin
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No seleccionado</div>
+                    )}
+                    {session.camera_profile && (
+                      <div className="mt-3 pt-3 border-t border-gray-800">
+                        <div className="text-xs text-gray-500">📷 {session.camera_profile.camera_model}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="text-2xl">🌙</div>
               </div>
-
-              <div className="space-y-2 text-sm">
-                {session.location && (
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <span>📍</span>
-                    <span>{session.location.name || 'Ubicación'}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      session.status === 'planning'
-                        ? 'bg-yellow-900 text-yellow-300'
-                        : session.status === 'ready'
-                        ? 'bg-green-900 text-green-300'
-                        : 'bg-blue-900 text-blue-300'
-                    }`}
-                  >
-                    {session.status === 'planning'
-                      ? 'Planificando'
-                      : session.status === 'ready'
-                      ? 'Lista'
-                      : 'En progreso'}
-                  </span>
-                </div>
-
-                {session.target && (
-                  <div className="text-gray-300 font-medium mt-3">
-                    🎯 {session.target.name}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

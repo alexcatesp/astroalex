@@ -40,6 +40,7 @@ class Ephemeris(BaseModel):
     darkness_start: datetime = Field(..., description="Start of astronomical darkness")
     darkness_end: datetime = Field(..., description="End of astronomical darkness")
     darkness_duration: float = Field(..., description="Duration of darkness in hours")
+    darkness_duration_formatted: Optional[str] = Field(None, description="Duration formatted as 'Xh Ym'")
     moon_phase: float = Field(..., ge=0, le=1, description="Moon phase (0=new, 1=full)")
     moon_illumination: int = Field(..., ge=0, le=100, description="Moon illumination percentage")
     moon_alt: Optional[float] = Field(None, description="Moon altitude in degrees")

@@ -238,7 +238,7 @@ export class ApiClient {
   }
 
   async updateSession(id: string, data: any) {
-    return this.post<any>(`/sessions/${id}`, data);
+    return this.patch<any>(`/sessions/${id}`, data);
   }
 
   async deleteSession(id: string) {

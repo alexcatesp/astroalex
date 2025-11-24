@@ -93,37 +93,86 @@ const CELESTIAL_OBJECTS = [
 export default function Step3TargetSelection({ session, onComplete, onBack }: Step3Props) {
   const [selectedTarget, setSelectedTarget] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredTargets, setFilteredTargets] = useState(CELESTIAL_OBJECTS);
+  const [filteredTargets, setFilteredTargets] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [userFilters, setUserFilters] = useState<string[]>([]);
+  const [filterByEquipment, setFilterByEquipment] = useState(true);
 
   useEffect(() => {
-    // Generar recomendaciones inteligentes basadas en condiciones
-    generateRecommendations();
+    // Cargar filtros del equipo activo
+    loadUserFilters();
   }, []);
 
   useEffect(() => {
-    // Filtrar objetivos por búsqueda
-    if (searchQuery) {
-      setFilteredTargets(
-        CELESTIAL_OBJECTS.filter((obj) =>
-          obj.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredTargets(CELESTIAL_OBJECTS);
+    // Generar recomendaciones inteligentes basadas en condiciones
+    if (userFilters.length > 0 || !filterByEquipment) {
+      generateRecommendations();
+      applyFilters();
     }
+  }, [userFilters, filterByEquipment]);
+
+  useEffect(() => {
+    // Filtrar objetivos por búsqueda
+    applyFilters();
   }, [searchQuery]);
+
+  const loadUserFilters = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/equipment/profiles/active');
+      if (response.ok) {
+        const profile = await response.json();
+        // Extraer nombres de filtros del equipo
+        const filters = profile.filters?.map((f: any) => f.name || f) || [];
+        setUserFilters(filters);
+      }
+    } catch (error) {
+      console.error('Error loading equipment filters:', error);
+      // Si no hay equipo configurado, mostrar todos los objetivos
+      setFilterByEquipment(false);
+      setUserFilters([]);
+    }
+  };
+
+  const applyFilters = () => {
+    let targets = CELESTIAL_OBJECTS;
+
+    // Filtrar por filtros de equipamiento
+    if (filterByEquipment && userFilters.length > 0) {
+      targets = targets.filter((obj) => {
+        // Un objetivo es compatible si al menos uno de sus filtros recomendados está disponible
+        return obj.bestFilters.some((filter) => userFilters.includes(filter));
+      });
+    }
+
+    // Filtrar por búsqueda
+    if (searchQuery) {
+      targets = targets.filter((obj) =>
+        obj.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredTargets(targets);
+  };
 
   const generateRecommendations = () => {
     // Lógica de recomendación basada en:
     // - Moon phase del session
     // - Seeing conditions
-    // - Equipment FOV
+    // - Equipment filters (filtrado por equipamiento)
 
     const moonIllumination = session.ephemeris?.moon_illumination || 50;
-    const seeing = session.sky_conditions?.seeing || 2.5;
+    const seeing = session.conditions?.seeing || 2.5;
 
-    let recommended = CELESTIAL_OBJECTS.map((obj) => {
+    let candidateObjects = CELESTIAL_OBJECTS;
+
+    // FILTRADO CRÍTICO: Solo objetivos compatibles con filtros del usuario
+    if (filterByEquipment && userFilters.length > 0) {
+      candidateObjects = candidateObjects.filter((obj) =>
+        obj.bestFilters.some((filter) => userFilters.includes(filter))
+      );
+    }
+
+    let recommended = candidateObjects.map((obj) => {
       let score = 100;
 
       // Penalizar objetos débiles si hay luna
@@ -143,6 +192,12 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
       // Favorecer objetos grandes y brillantes para principiantes
       if (obj.difficulty === 'easy') score += 15;
       if (obj.size > 60) score += 10;
+
+      // Bonus si el usuario tiene TODOS los filtros recomendados
+      const hasAllFilters = obj.bestFilters.every((filter) =>
+        userFilters.includes(filter)
+      );
+      if (hasAllFilters) score += 25;
 
       return { ...obj, score };
     });
@@ -196,6 +251,43 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
         </p>
       </div>
 
+      {/* Equipment Filters Info */}
+      {userFilters.length > 0 && (
+        <div className="mb-6 bg-blue-900/20 border border-blue-800 rounded-xl p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                <span>🔭</span> Filtros de tu Equipo
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {userFilters.map((filter) => (
+                  <span
+                    key={filter}
+                    className="px-3 py-1 bg-blue-700 rounded-full text-xs text-white font-medium"
+                  >
+                    {filter}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filterByEquipment}
+                onChange={(e) => setFilterByEquipment(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-xs text-gray-300">Filtrar por equipo</span>
+            </label>
+          </div>
+          {filterByEquipment && (
+            <p className="text-xs text-blue-200 mt-2">
+              ℹ️ Mostrando solo objetivos compatibles con tus filtros
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Recommendations */}
         <div className="lg:col-span-1">
@@ -205,7 +297,7 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
             </h3>
             <p className="text-sm text-gray-300 mb-4">
               Basado en luna {session.ephemeris?.moon_illumination || 0}%, seeing{' '}
-              {session.sky_conditions?.seeing || 'N/A'}"
+              {session.conditions?.seeing || 'N/A'}"
             </p>
 
             <div className="space-y-3">

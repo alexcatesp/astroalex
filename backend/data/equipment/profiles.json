@@ -2,40 +2,47 @@
   {
     "id": "8e4155f2-f215-4ff1-81e7-125c977346cc",
     "name": "Setup Principal",
-    "description": "Mi equipo principal con ASI294MC Pro",
+    "description": "Mi equipo principal",
     "camera": {
-      "model": "ZWO ASI294MC Pro",
+      "model": "ZWO ASI533MM Pro",
       "manufacturer": "ZWO",
-      "sensor_width": 4144,
-      "sensor_height": 2822,
-      "pixel_size": 4.63,
-      "read_noise": null,
-      "gain": null,
-      "full_well_capacity": null,
-      "color": true,
+      "sensor_width": 3008,
+      "sensor_height": 3008,
+      "pixel_size": 3.76,
+      "color": false,
       "cooling": true,
-      "bit_depth": 16
+      "bit_depth": 14
     },
     "telescope": {
-      "name": "Refractor 80mm",
-      "manufacturer": "William Optics",
-      "focal_length": 600,
-      "aperture": 80,
-      "focal_ratio": 7.5,
+      "name": "SkyWatcher 200PDS",
+      "manufacturer": "SkyWatcher",
+      "focal_length": 1000,
+      "aperture": 200,
+      "focal_ratio": 5.0,
       "telescope_type": "refractor"
     },
     "mount": null,
     "filters": [
       {
-        "name": "L-Pro",
-        "type": "broadband",
-        "bandwidth": null,
-        "central_wavelength": null
+        "name": "L",
+        "type": "luminance"
+      },
+      {
+        "name": "R",
+        "type": "rgb"
+      },
+      {
+        "name": "G",
+        "type": "rgb"
+      },
+      {
+        "name": "B",
+        "type": "rgb"
       }
     ],
     "default_location": null,
     "is_active": true,
     "created_at": "2025-11-23 22:37:00.413758",
-    "updated_at": "2025-11-23 22:37:00.413783"
+    "updated_at": "2025-11-23 23:34:07.876489"
   }
 ]

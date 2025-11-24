@@ -7,8 +7,12 @@ import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import EarthLocation, AltAz, get_sun, SkyCoord, get_body
 import numpy as np
+import requests
+import logging
 
 from app.models.session import GeoLocation, SkyConditions, Ephemeris, AssistantMessage
+
+logger = logging.getLogger(__name__)
 
 
 class EnvironmentalService:
@@ -77,6 +81,11 @@ class EnvironmentalService:
         # Calculate darkness duration
         darkness_duration = (astro_twilight_morning - astro_twilight_evening).total_seconds() / 3600
 
+        # Format duration as "Xh Ym"
+        hours = int(darkness_duration)
+        minutes = int((darkness_duration - hours) * 60)
+        darkness_duration_formatted = f"{hours}h {minutes}m"
+
         # Get moon data
         moon_time = Time(date)
         moon = get_body('moon', moon_time)
@@ -91,6 +100,7 @@ class EnvironmentalService:
             darkness_start=astro_twilight_evening,
             darkness_end=astro_twilight_morning,
             darkness_duration=darkness_duration,
+            darkness_duration_formatted=darkness_duration_formatted,
             moon_phase=moon_phase,
             moon_illumination=moon_illumination,
             sun_set=sunset_time,
@@ -101,31 +111,94 @@ class EnvironmentalService:
 
     def get_sky_conditions(self, location: GeoLocation) -> SkyConditions:
         """
-        Get current sky conditions from weather API
-
-        For now, returns placeholder data. In production, this would:
-        - Query Meteoblue or OpenMeteo API
-        - Parse seeing, clouds, jet stream data
-        - Handle API fallback and caching
+        Get current sky conditions from Open-Meteo API
 
         Args:
             location: Observer location
 
         Returns:
-            SkyConditions object
+            SkyConditions object with real weather data
         """
-        # TODO: Implement actual API calls to Meteoblue/OpenMeteo
-        # For now, return placeholder data
-        return SkyConditions(
-            seeing=2.5,  # arcseconds
-            clouds=30,   # percentage
-            jet_stream=25.0,  # m/s
-            transparency=75,
-            humidity=60,
-            wind_speed=5.0,
-            temperature=15.0,
-            source="placeholder"
-        )
+        try:
+            # Open-Meteo API endpoint
+            url = "https://api.open-meteo.com/v1/forecast"
+
+            params = {
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "current": [
+                    "temperature_2m",
+                    "relative_humidity_2m",
+                    "cloud_cover",
+                    "wind_speed_10m",
+                    "wind_speed_100m"  # Approximation for jet stream
+                ],
+                "timezone": "auto"
+            }
+
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            current = data.get("current", {})
+
+            # Extract weather data
+            temperature = current.get("temperature_2m", 15.0)
+            humidity = current.get("relative_humidity_2m", 60)
+            clouds = current.get("cloud_cover", 30)
+            wind_speed = current.get("wind_speed_10m", 5.0)
+            jet_stream = current.get("wind_speed_100m", 25.0)  # Wind at 100m as proxy
+
+            # Estimate seeing based on wind speed and cloud cover
+            # Empirical formula: better seeing with lower wind and fewer clouds
+            # Typical seeing ranges: 1.0" (excellent) to 5.0" (poor)
+            base_seeing = 1.5 + (wind_speed / 10.0) * 2.0  # Wind contribution
+            cloud_factor = (clouds / 100.0) * 0.5  # Cloud contribution
+            seeing = min(5.0, base_seeing + cloud_factor)
+
+            # Estimate transparency (inverse of clouds, with humidity factor)
+            transparency = int(100 - clouds * 0.7 - (humidity - 50) * 0.3)
+            transparency = max(0, min(100, transparency))
+
+            logger.info(f"Retrieved weather data from Open-Meteo for {location.name}: "
+                       f"T={temperature}°C, Clouds={clouds}%, Wind={wind_speed}m/s")
+
+            return SkyConditions(
+                seeing=round(seeing, 1),
+                clouds=int(clouds),
+                jet_stream=round(jet_stream, 1),
+                transparency=transparency,
+                humidity=int(humidity),
+                wind_speed=round(wind_speed, 1),
+                temperature=round(temperature, 1),
+                source="Open-Meteo"
+            )
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to retrieve weather data from Open-Meteo: {e}")
+            # Return fallback data
+            return SkyConditions(
+                seeing=2.5,
+                clouds=30,
+                jet_stream=25.0,
+                transparency=70,
+                humidity=60,
+                wind_speed=5.0,
+                temperature=15.0,
+                source="fallback"
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in get_sky_conditions: {e}")
+            return SkyConditions(
+                seeing=2.5,
+                clouds=30,
+                jet_stream=25.0,
+                transparency=70,
+                humidity=60,
+                wind_speed=5.0,
+                temperature=15.0,
+                source="error_fallback"
+            )
 
     def generate_recommendations(self, conditions: SkyConditions, ephemeris: Ephemeris) -> AssistantMessage:
         """

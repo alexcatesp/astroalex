@@ -10,9 +10,9 @@ from app.models.session import (
     ObservingSession,
     SessionCreate,
     SessionUpdate,
-    SessionListItem,
-    GeoLocation
+    SessionListItem
 )
+from app.models.common import GeoLocation
 from app.models.camera import CharacterizationInput
 from app.services.session_service import SessionService
 from app.services.environmental_service import EnvironmentalService
@@ -263,21 +263,23 @@ def suggest_targets(
     return {"suggestions": results}
 
 
-@router.post("/{session_id}/step3/select")
+@router.post("/{session_id}/step3/select", response_model=ObservingSession)
 def select_target(
     session_id: str,
-    target_name: str,
-    sensor_width: int = 3008,
-    sensor_height: int = 3008,
-    pixel_size: float = 3.76,
-    focal_length: float = 600
+    request: dict
 ):
     """
     Step 3: Select and validate a target
+
+    Accepts target selection from frontend with target_name, target_id, ra, dec
     """
     session = session_service.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    target_name = request.get('target_name')
+    if not target_name:
+        raise HTTPException(status_code=422, detail="target_name is required")
 
     # Search for target
     matches = target_service.search_by_name(target_name)
@@ -285,6 +287,27 @@ def select_target(
         raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
 
     target = matches[0]
+
+    # Use equipment profile dimensions if available, otherwise defaults
+    sensor_width = 3008
+    sensor_height = 3008
+    pixel_size = 3.76
+    focal_length = 600
+
+    # Try to get from equipment profile if session has one
+    if session.equipment_profile_id:
+        try:
+            # Import here to avoid circular dependency
+            from app.services.equipment_service import EquipmentService
+            eq_service = EquipmentService()
+            profile = eq_service.get_profile(session.equipment_profile_id)
+            if profile:
+                sensor_width = profile.camera.sensor_width
+                sensor_height = profile.camera.sensor_height
+                pixel_size = profile.camera.pixel_size
+                focal_length = profile.telescope.focal_length
+        except:
+            pass  # Use defaults if equipment profile not available
 
     # Validate target
     validation = target_service.validate_target(
