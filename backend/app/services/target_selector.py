@@ -233,6 +233,17 @@ class TargetSelector:
 
         return matches
 
+    def search_by_catalog_id(self, catalog_id: str) -> List[CelestialTarget]:
+        """Search targets by exact catalog ID match"""
+        catalog_id_upper = catalog_id.upper()
+        matches = []
+
+        for target in self.catalog:
+            if target.catalog_id.upper() == catalog_id_upper:
+                matches.append(target)
+
+        return matches
+
     def _calculate_fov(self, sensor_pixels: float, pixel_size_um: float, focal_length_mm: float) -> float:
         """Calculate field of view in arcminutes"""
         sensor_size_mm = (sensor_pixels * pixel_size_um) / 1000

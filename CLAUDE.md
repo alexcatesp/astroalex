@@ -394,15 +394,38 @@ astroalex/
 - Phase 4-5: Visualization & export (basic)
 - Testing infrastructure
 
-### 🚧 IN PROGRESS (V2.0 Wizard)
-- **Priority 1:** Wizard UI framework and navigation
-- **Priority 2:** Environmental context (Step 1)
-- **Priority 3:** Camera characterization (Step 2)
-- **Priority 4:** Target selection (Step 3)
-- **Priority 5:** Smart Scout (Step 4)
-- **Priority 6:** Flight Plan Generator (Step 5)
-- **Priority 7:** ML Quality Control (Step 7)
-- **Priority 8:** Enhanced Pipeline (Step 8)
+### ✅ COMPLETED (V2.0 Wizard - UI & Core Features)
+- **Wizard UI framework** with step navigation and progress tracking
+- **Session Management** with full CRUD operations
+- **Equipment Profiles** management and activation
+- **Step 1: Environmental Context**
+  - Open-Meteo integration for real-time weather
+  - Ephemeris calculation with Astropy
+  - Location editing with geolocation
+  - Auto-refresh on location change
+  - Manual refresh button for conditions
+  - Color-coded weather metrics
+- **Step 2: Camera Characterization**
+  - FITS upload and analysis
+  - Read noise, gain, and FWC calculation
+  - Optional skip with defaults
+- **Step 3: Target Selection**
+  - Equipment-based filtering (shows only compatible targets)
+  - Intelligent recommendations with scoring algorithm
+  - Filter compatibility checks
+  - Manual search and selection
+- **Session Cards** redesigned with full-width layout
+- **Onboarding Flow** with storage and equipment setup
+
+### 🚧 IN PROGRESS (V2.0 Wizard - Advanced Features)
+- **Step 3 Enhancements:**
+  - Expand object database beyond 6 mock objects to full NGC/IC/Messier catalog
+  - Add visibility curve visualization (similar to ASIAir)
+  - Implement FOV simulation with visual preview
+- **Step 4:** Smart Scout implementation
+- **Step 5:** Flight Plan Generator
+- **Step 7:** ML Quality Control with Isolation Forest
+- **Step 8:** Enhanced Processing Pipeline with HDR fusion
 
 ## Migration Strategy from V1 to V2
 

@@ -264,16 +264,30 @@ PROJECT_NAME/
 - Pipeline básico de procesado
 - Visualización y export
 
-### 🚧 V2.0 Wizard (En Progreso)
-Prioridades actuales:
-1. Framework de wizard UI
-2. Contexto ambiental (APIs + efemérides)
-3. Caracterización de cámara
-4. Selección inteligente de objetivos
-5. Smart Scout (análisis de prueba)
-6. Generador de Flight Plan
-7. Quality Control con ML
-8. Pipeline mejorado (HDR, PCC, Auto-Stretch)
+### ✅ V2.0 Wizard - UI & Core Features (Completado)
+- ✅ Framework de wizard UI con navegación paso a paso
+- ✅ Gestión completa de sesiones y perfiles de equipo
+- ✅ **Step 1:** Contexto ambiental con Open-Meteo + efemérides
+  - Auto-refresh al cambiar ubicación
+  - Botón de refresco manual para condiciones
+  - Métricas meteorológicas con codificación de colores
+- ✅ **Step 2:** Caracterización de cámara (Read Noise, Gain, FWC)
+- ✅ **Step 3:** Selección de objetivos con filtrado inteligente
+  - Filtrado basado en equipamiento disponible
+  - Sistema de recomendaciones con scoring
+  - Compatibilidad con filtros del usuario
+- ✅ Cards de sesión rediseñadas con layout completo
+- ✅ Flujo de onboarding con configuración de almacenamiento
+
+### 🚧 V2.0 Wizard - Advanced Features (En Progreso)
+Próximos pasos:
+1. Expansión de base de datos de objetos celestes (NGC/IC/Messier completo)
+2. Curva de visibilidad para objetivos (estilo ASIAir)
+3. Simulación FOV con vista previa visual
+4. Smart Scout (análisis de frame de prueba)
+5. Generador de Flight Plan con export ASIAIR/N.I.N.A
+6. Quality Control con ML (Isolation Forest)
+7. Pipeline mejorado (HDR fusion, PCC, Auto-Stretch)
 
 ---
 

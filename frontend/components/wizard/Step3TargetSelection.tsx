@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import VisibilityCurve from './VisibilityCurve';
 
 interface Step3Props {
   session: any;
@@ -97,6 +98,7 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [userFilters, setUserFilters] = useState<string[]>([]);
   const [filterByEquipment, setFilterByEquipment] = useState(true);
+  const [showVisibilityCurve, setShowVisibilityCurve] = useState(false);
 
   useEffect(() => {
     // Cargar filtros del equipo activo
@@ -209,6 +211,14 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
 
   const handleSelectTarget = (target: any) => {
     setSelectedTarget(target);
+    setShowVisibilityCurve(true);
+    // Scroll to visibility curve
+    setTimeout(() => {
+      document.getElementById('visibility-curve')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   };
 
   const handleContinue = async () => {
@@ -443,6 +453,16 @@ export default function Step3TargetSelection({ session, onComplete, onBack }: St
           </div>
         </div>
       </div>
+
+      {/* Visibility Curve - Full Width */}
+      {showVisibilityCurve && selectedTarget && (
+        <div id="visibility-curve" className="mt-8">
+          <VisibilityCurve
+            sessionId={session.id}
+            targetCatalogId={selectedTarget.id.toUpperCase()}
+          />
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-4 mt-8">

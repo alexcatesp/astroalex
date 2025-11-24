@@ -49,6 +49,15 @@ class Ephemeris(BaseModel):
     astronomical_twilight_start: datetime = Field(..., description="Evening astronomical twilight")
     astronomical_twilight_end: datetime = Field(..., description="Morning astronomical twilight")
 
+    @property
+    def formatted_duration(self) -> str:
+        """Generate formatted duration if not set"""
+        if self.darkness_duration_formatted:
+            return self.darkness_duration_formatted
+        hours = int(self.darkness_duration)
+        minutes = int((self.darkness_duration - hours) * 60)
+        return f"{hours}h {minutes}m"
+
 
 class SensorProfile(BaseModel):
     """Camera sensor characterization profile"""

@@ -1,8 +1,8 @@
 """
 API endpoints for observing session management
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File
-from typing import List
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from typing import List, Optional
 from pathlib import Path
 import shutil
 
@@ -20,6 +20,7 @@ from app.services.camera_characterizer import CameraCharacterizer
 from app.services.target_selector import TargetSelector
 from app.services.smart_scout import SmartScout
 from app.services.flight_planner import FlightPlanGenerator
+from app.services.visibility_service import VisibilityService
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -30,6 +31,7 @@ camera_service = CameraCharacterizer()
 target_service = TargetSelector()
 scout_service = SmartScout()
 planner_service = FlightPlanGenerator()
+visibility_service = VisibilityService()
 
 
 @router.post("/", response_model=ObservingSession)
@@ -123,12 +125,12 @@ def calculate_context(session_id: str):
 @router.post("/{session_id}/step2/characterize")
 async def characterize_camera(
     session_id: str,
-    camera_model: str,
-    gain_setting: int = None,
     bias1: UploadFile = File(...),
     bias2: UploadFile = File(...),
     flat1: UploadFile = File(...),
-    flat2: UploadFile = File(...)
+    flat2: UploadFile = File(...),
+    camera_model: str = Form("Unknown Camera"),
+    gain_setting: Optional[int] = Form(None)
 ):
     """
     Step 2: Characterize camera sensor
@@ -506,3 +508,61 @@ def export_plan(session_id: str, format: str):
         filename=output_path.name,
         media_type="application/json"
     )
+
+
+# STEP 3 Enhancement: Visibility Calculations
+@router.get("/{session_id}/targets/{target_catalog_id}/visibility")
+def get_target_visibility(session_id: str, target_catalog_id: str):
+    """
+    Get visibility curve for a specific target
+
+    Returns altitude, azimuth, airmass curve throughout the night,
+    plus darkness periods and optimal visibility window
+    """
+    session = session_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if not session.location:
+        raise HTTPException(status_code=400, detail="Session must have a location set")
+
+    # Find target
+    matches = target_service.search_by_catalog_id(target_catalog_id)
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"Target '{target_catalog_id}' not found")
+
+    target = matches[0]
+
+    # Calculate visibility curve
+    curve = visibility_service.calculate_visibility_curve(
+        target=target,
+        location=session.location,
+        date=session.date
+    )
+
+    # Get darkness periods
+    darkness = visibility_service.get_darkness_periods(
+        location=session.location,
+        date=session.date
+    )
+
+    # Get optimal visibility window
+    window = visibility_service.get_visibility_window(
+        target=target,
+        location=session.location,
+        date=session.date
+    )
+
+    # Get moon position
+    moon = visibility_service.get_moon_position(
+        location=session.location,
+        date=session.date
+    )
+
+    return {
+        "target": target.dict(),
+        "visibility_curve": curve,
+        "darkness_periods": darkness,
+        "optimal_window": window,
+        "moon": moon
+    }

@@ -1,0 +1,100 @@
+{
+  "id": "32f02ae8-98a6-4565-9b47-8a584a962bf9",
+  "name": "Sesi\u00f3n 24/11/2025",
+  "date": "2025-11-24 20:51:07.361000+00:00",
+  "status": "step2_camera",
+  "equipment_profile_id": "8e4155f2-f215-4ff1-81e7-125c977346cc",
+  "location": {
+    "latitude": 41.7333248,
+    "longitude": -4.6563328,
+    "elevation": null,
+    "timezone": "Europe/Madrid",
+    "name": "Cabez\u00f3n de Pisuerga"
+  },
+  "conditions": {
+    "seeing": 3.3,
+    "clouds": 64,
+    "jet_stream": 26.3,
+    "transparency": 43,
+    "humidity": 90,
+    "wind_speed": 7.6,
+    "temperature": 9.4,
+    "source": "Open-Meteo",
+    "timestamp": "2025-11-24 20:51:11.312337"
+  },
+  "ephemeris": {
+    "darkness_start": "2025-11-24 18:29:11.351351",
+    "darkness_end": "2025-11-25 05:40:54.054054",
+    "darkness_duration": 11.195195195277778,
+    "darkness_duration_formatted": "11h 11m",
+    "moon_phase": 0.18148179801147213,
+    "moon_illumination": 18,
+    "moon_alt": null,
+    "sun_set": "2025-11-24 16:45:24.324324",
+    "sun_rise": "2025-11-25 07:24:41.081081",
+    "astronomical_twilight_start": "2025-11-24 18:29:11.351351",
+    "astronomical_twilight_end": "2025-11-25 05:40:54.054054"
+  },
+  "camera_profile": {
+    "camera_model": "Unknown Camera",
+    "read_noise": 10452.1,
+    "gain": 1664.999,
+    "full_well_capacity": 103569504,
+    "measured_date": "2025-11-24 21:12:39.670317",
+    "temperature": null,
+    "gain_setting": null,
+    "offset": null,
+    "binning": "1x1",
+    "notes": "Flats at 14.2% of max. Ideal range: 40-60%; Gain value (1665.00) seems unusual. Typical range: 0.5-3.0; Read noise (10452.10e-) seems unusual."
+  },
+  "target": null,
+  "fov_simulation": null,
+  "scout_analysis": null,
+  "acquisition_plan": null,
+  "project_id": null,
+  "project_path": null,
+  "messages": [
+    {
+      "step": "created",
+      "message": "Sesi\u00f3n 'Sesi\u00f3n 24/11/2025' creada. Empecemos analizando las condiciones de observaci\u00f3n.",
+      "timestamp": "2025-11-24 20:51:07.363101",
+      "data": null
+    },
+    {
+      "step": "step1_context",
+      "message": "Buenas tardes. Tienes **11h 11m** de oscuridad astron\u00f3mica (18:29 - 05:40). El Seeing es pobre (3.3\"), te recomiendo evitar focales extremas o usar Binning 2x2. Luna al 18%, excelente para objetos d\u00e9biles en banda ancha (LRGB). Nubes al 64%, monitorea el cielo durante la sesi\u00f3n.",
+      "timestamp": "2025-11-24 20:51:11.312359",
+      "data": {
+        "seeing": 3.3,
+        "clouds": 64,
+        "moon_illumination": 18,
+        "darkness_hours": 11.195195195277778
+      }
+    },
+    {
+      "step": "step2_camera",
+      "message": "Perfil actualizado. Tu c\u00e1mara est\u00e1 rindiendo a **10784.41e-** de ruido de lectura. Gain: **1714.481 e-/ADU**, Full Well: **106,647,914 e-**. El sistema est\u00e1 calibrado.\n\nAdvertencias: Flats at 14.5% of max. Ideal range: 40-60%; Gain value (1714.48) seems unusual. Typical range: 0.5-3.0; Read noise (10784.41e-) seems unusual.",
+      "timestamp": "2025-11-24 21:01:13.953003",
+      "data": {
+        "read_noise": 10784.41,
+        "gain": 1714.481,
+        "fwc": 106647914,
+        "confidence": 0.3
+      }
+    },
+    {
+      "step": "step2_camera",
+      "message": "Perfil actualizado. Tu c\u00e1mara est\u00e1 rindiendo a **10452.1e-** de ruido de lectura. Gain: **1664.999 e-/ADU**, Full Well: **103,569,504 e-**. El sistema est\u00e1 calibrado.\n\nAdvertencias: Flats at 14.2% of max. Ideal range: 40-60%; Gain value (1665.00) seems unusual. Typical range: 0.5-3.0; Read noise (10452.10e-) seems unusual.",
+      "timestamp": "2025-11-24 21:12:39.670346",
+      "data": {
+        "read_noise": 10452.1,
+        "gain": 1664.999,
+        "fwc": 103569504,
+        "confidence": 0.3
+      }
+    }
+  ],
+  "created_at": "2025-11-24 20:51:07.363066",
+  "updated_at": "2025-11-24 21:12:39.670352",
+  "completed_at": null
+}

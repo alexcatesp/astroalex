@@ -32,7 +32,17 @@
       "Bash(python -m json.tool:*)",
       "Bash(python:*)",
       "Bash(timeout /t 3)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "Bash(timeout:*)",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(git reset:*)",
+      "mcp__playwright__browser_handle_dialog",
+      "Bash(dir:*)",
+      "Bash(if exist \"frontend\\nul\" del \"frontend\\nul\")",
+      "Bash(if exist nul del nul)",
+      "Bash(move:*)",
+      "Bash(del \"D:\\Development\\astroalex\\backend\\app\\data\\objects_catalog.json\")",
+      "Bash(ren \"D:\\Development\\astroalex\\backend\\app\\data\\objects_catalog_extended.json\" \"objects_catalog.json\")"
     ],
     "deny": [],
     "ask": []
