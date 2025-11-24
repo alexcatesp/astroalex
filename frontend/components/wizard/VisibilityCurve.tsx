@@ -115,31 +115,41 @@ export default function VisibilityCurve({ sessionId, targetCatalogId }: Props) {
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
-  // Get time range (darkness window start to end)
-  const sunsetTime = parseTime(data.darkness_periods.darkness_window.start);
-  const sunriseTime = parseTime(data.darkness_periods.darkness_window.end);
-  const timeRange = sunriseTime < sunsetTime
-    ? (24 - sunsetTime + sunriseTime)
-    : (sunriseTime - sunsetTime);
+  // Get time range (use full night from civil twilight for better context)
+  const sunsetTime = parseTime(data.darkness_periods.civil_twilight.times[0]);
+  const sunriseTime = parseTime(data.darkness_periods.civil_twilight.times[1]);
+
+  // Calculate time range accounting for midnight crossing
+  let timeRange: number;
+  if (sunriseTime < sunsetTime) {
+    // Crosses midnight
+    timeRange = (24 - sunsetTime) + sunriseTime;
+  } else {
+    timeRange = sunriseTime - sunsetTime;
+  }
 
   // Altitude range (0-90 degrees)
   const altitudeMin = 0;
   const altitudeMax = 90;
 
-  // Convert data points to chart coordinates
-  const points = data.visibility_curve.map((point) => {
-    let time = parseTime(point.time);
+  // Convert data points to chart coordinates, filtering to visible times
+  const points = data.visibility_curve
+    .map((point) => {
+      let time = parseTime(point.time);
 
-    // Adjust time if it crosses midnight
-    if (sunriseTime < sunsetTime && time < 12) {
-      time += 24;
-    }
+      // Adjust time if it crosses midnight
+      if (sunriseTime < sunsetTime && time < 12) {
+        time += 24;
+      }
 
-    const x = padding.left + ((time - sunsetTime) / timeRange) * chartWidth;
-    const y = padding.top + chartHeight - ((point.altitude - altitudeMin) / (altitudeMax - altitudeMin)) * chartHeight;
+      // Calculate x position
+      const x = padding.left + ((time - sunsetTime) / timeRange) * chartWidth;
+      const y = padding.top + chartHeight - ((point.altitude - altitudeMin) / (altitudeMax - altitudeMin)) * chartHeight;
 
-    return { x, y, ...point };
-  });
+      return { x, y, time: time, altitude: point.altitude, ...point };
+    })
+    // Filter to only show points within the chart range
+    .filter((p) => p.x >= padding.left && p.x <= padding.left + chartWidth);
 
   // Create path for altitude curve
   const pathData = points.map((p, i) =>
