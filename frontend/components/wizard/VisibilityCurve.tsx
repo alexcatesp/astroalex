@@ -58,6 +58,7 @@ export default function VisibilityCurve({ sessionId, targetCatalogId }: Props) {
   const [data, setData] = useState<VisibilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hoverData, setHoverData] = useState<{ x: number; time: string; altitude: number } | null>(null);
 
   useEffect(() => {
     const fetchVisibility = async () => {
@@ -177,6 +178,41 @@ export default function VisibilityCurve({ sessionId, targetCatalogId }: Props) {
     return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Handle mouse move over chart
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = ((e.clientX - rect.left) / rect.width) * width;
+
+    // Check if mouse is within chart area
+    if (mouseX < padding.left || mouseX > padding.left + chartWidth) {
+      setHoverData(null);
+      return;
+    }
+
+    // Find closest point
+    let closestPoint = points[0];
+    let minDistance = Math.abs(points[0].x - mouseX);
+
+    for (const point of points) {
+      const distance = Math.abs(point.x - mouseX);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = point;
+      }
+    }
+
+    setHoverData({
+      x: closestPoint.x,
+      time: closestPoint.time,
+      altitude: closestPoint.altitude
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoverData(null);
+  };
+
   return (
     <div className="w-full bg-slate-800/50 rounded-lg p-6 space-y-4">
       {/* Header */}
@@ -209,7 +245,9 @@ export default function VisibilityCurve({ sessionId, targetCatalogId }: Props) {
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-auto"
-          style={{ maxWidth: '100%', height: 'auto' }}
+          style={{ maxWidth: '100%', height: 'auto', cursor: 'crosshair' }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
           {/* Background grid */}
           <defs>
@@ -326,6 +364,69 @@ export default function VisibilityCurve({ sessionId, targetCatalogId }: Props) {
           >
             Hora Local
           </text>
+
+          {/* Hover line and tooltip */}
+          {hoverData && (
+            <g>
+              {/* Vertical line */}
+              <line
+                x1={hoverData.x}
+                y1={padding.top}
+                x2={hoverData.x}
+                y2={padding.top + chartHeight}
+                stroke="rgb(248, 113, 113)"
+                strokeWidth="1.5"
+                strokeDasharray="4,4"
+                opacity="0.8"
+              />
+
+              {/* Circle at intersection */}
+              <circle
+                cx={hoverData.x}
+                cy={padding.top + chartHeight - ((hoverData.altitude - altitudeMin) / (altitudeMax - altitudeMin)) * chartHeight}
+                r="4"
+                fill="rgb(248, 113, 113)"
+                stroke="white"
+                strokeWidth="2"
+              />
+
+              {/* Tooltip background */}
+              <rect
+                x={hoverData.x < padding.left + chartWidth / 2 ? hoverData.x + 10 : hoverData.x - 110}
+                y={padding.top + 10}
+                width="100"
+                height="50"
+                fill="rgb(15, 23, 42)"
+                stroke="rgb(248, 113, 113)"
+                strokeWidth="1"
+                rx="4"
+                opacity="0.95"
+              />
+
+              {/* Tooltip text - Time */}
+              <text
+                x={hoverData.x < padding.left + chartWidth / 2 ? hoverData.x + 60 : hoverData.x - 60}
+                y={padding.top + 28}
+                textAnchor="middle"
+                fontSize="12"
+                fill="rgb(248, 113, 113)"
+                fontWeight="600"
+              >
+                {formatTime(hoverData.time)}
+              </text>
+
+              {/* Tooltip text - Altitude */}
+              <text
+                x={hoverData.x < padding.left + chartWidth / 2 ? hoverData.x + 60 : hoverData.x - 60}
+                y={padding.top + 46}
+                textAnchor="middle"
+                fontSize="11"
+                fill="rgb(203, 213, 225)"
+              >
+                Alt: {hoverData.altitude.toFixed(1)}°
+              </text>
+            </g>
+          )}
         </svg>
       </div>
 
